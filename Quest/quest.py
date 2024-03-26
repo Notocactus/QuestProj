@@ -3,8 +3,9 @@ from flask import json
 from database import TokenExpired
 from .srv import app, session, redirect, request, render_template
 
-from database._quest import *
-from database._block import GetAllTasks
+from ..database._quest import *
+from ..database._block import GetAllTasks
+from ..database._tasks import GetUserProgress
 from .srv import app
 
 
@@ -30,21 +31,26 @@ def get_quests():
             return {"status": "ERR", "message": "There are no quests yet"}
         return {"status": "OK", "message": json.dumps(_data)}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:id>/participants', methods=["GET"])
-def get_quest_participants(id):
+@app.route('/quests/<int:quest_id>/participants', methods=["GET"])
+def get_quest_participants(quest_id):
     try:
-        if (id):
-            _data = GetQuestParticipants(id)
-            if (len(_data) == 0):
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        if quest_id:
+            _data = GetQuestParticipants(quest_id)
+            if len(_data) == 0:
                 return {"status": "ERR", "message": "There are no participants yet"}
             return {"status": "OK", "message": json.dumps(_data)}
         else:
             return {"status": "ERR", "message": "Something went terribly wrong"}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/quests/create', methods=["POST"])
@@ -54,7 +60,10 @@ def create_quest():
         _hauth_token = _header["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
+
+        # How to save files
         _quest_image = request.files["quest_image"]
+        _quest_image_url = ""
         _json = request.json
         _quest_name = _json['quest_name']
         _short = _json['short']
@@ -62,10 +71,10 @@ def create_quest():
         _creator_id = GetUserByToken(_hauth_token)
         _start_time = _json['start_time']
         _end_time = _json['end_time']
-        AddQuest(_quest_name, _short, _quest_type, _creator_id, _start_time, _end_time, _quest_image)
+        AddQuest(_quest_name, _short, _quest_type, _creator_id, _start_time, _end_time, _quest_image_url)
         return {"status": "OK", "message": "Quest created successfully"}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/quests/<int:quest_id>', methods=["GET", "PUT"])
@@ -82,9 +91,19 @@ def quest(quest_id):
 
             if not _user or not _quest:
                 return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
-
+            # if not creator
             if _user["id"] != _quest["creator_id"]:
                 _data = GetQuestById(quest_id)
+                _blocks = GetAllBlocks(quest_id)
+                for _block in _blocks:
+                    _tasks = GetAllTasks(_block["id"])
+                    for _task in _tasks:
+                        _progress = GetUserProgress(_user["id"], _task["id"])
+                        _task["user_progress"] = _progress
+                    _block["tasks_list"] = _tasks
+                _data["blocks_list"] = _blocks
+
+            # if is creator
             else:
                 _data = GetQuestById(quest_id)
                 _blocks = GetAllBlocks(quest_id)
@@ -98,7 +117,7 @@ def quest(quest_id):
                     return {"status": "OK", "message": json.dumps(_data)}
 
         except Exception as e:
-            return {"status": "ERR", "message": e}
+            return {"status": "ERR", "message": f"{e}"}
     elif request.method == "PUT":
         try:
             _header = request.headers
@@ -129,28 +148,50 @@ def quest(quest_id):
                 ChangeQuestInfo(quest_id, "end_time", _new_end)
             return {"status": "OK", "message": "Quest changed successfully"}
         except Exception as e:
-            return {"status": "ERR", "message": e}
+            return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/quests/<int:quest_id>', methods=["DELETE"])
 def delete_quest(quest_id):
     try:
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(quest_id)
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
         if GetQuestById(quest_id):
             DeleteQuestById(quest_id)
             return {"status": "OK", "message": "Quest successfully deleted"}
         else:
             return {"status": "ERR", "message": "Quest doesn't exist"}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:id>/removeparticipant/<int:token>', methods=["DELETE"])
-def remove_participant(id, token):
+@app.route('/quests/<int:quest_id>/removeparticipant/<int:user_id>', methods=["DELETE"])
+def remove_participant(quest_id, user_id):
     try:
-        RemoveUserFromQuest(id, token)
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(quest_id)
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        RemoveUserFromQuest(quest_id, user_id)
         return {"status": "OK", "message": "Participant removed successfully"}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/quests/<int:id>/block', methods=['POST'])
@@ -165,7 +206,7 @@ def create_block():
             _data = GetBlockByInfo(_quest_id, _block_num, _block_type)
             return {"status": "OK", "message": _data['id']}
         except Exception as e:
-            return {"status": "ERR", "message": e}
+            return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/quests/<int:id>/blocks', methods=['GET', "PUT"])
@@ -177,7 +218,7 @@ def get_blocks(id):
                 return {"status": "ERR", "message": "There are no blocks yet"}
             return {"status": "OK", "message": json.dumps(_data)}
         except Exception as e:
-            return {"status": "ERR", "message": e}
+            return {"status": "ERR", "message": f"{e}"}
     else:
         try:
             _json = request.json
@@ -186,6 +227,6 @@ def get_blocks(id):
                 Change(block['id'], block['block_num'])
             return {'status': "OK", "message": "Order changed"}
         except Exception as e:
-            return {"status": "ERR", "message": e}
+            return {"status": "ERR", "message": f"{e}"}
 
 

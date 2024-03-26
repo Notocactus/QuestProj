@@ -1,6 +1,6 @@
 from flask import json
 from .srv import app, session, redirect, request, render_template
-from database import *
+from ..database import *
 from time import time
 from hashlib import md5
 
@@ -47,7 +47,7 @@ def validate():
         else:
             return {"status": "ERR", "message": "No such session"}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/user/user', methods=["GET"])

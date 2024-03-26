@@ -2,22 +2,22 @@ from flask import json
 
 from .srv import app, session, redirect, request, render_template
 
-from database._tasks import *
+from ..database._tasks import *
 from .srv import app
 
 
-@app.route('/tasks/<int:id>', methods=["GET"])
-def task(id):
+@app.route('/tasks/<int:task_id>', methods=["GET"])
+def task(task_id):
     try:
-        _data = GetTask(id)
+        _data = GetTask(task_id)
         if len(_data) == 0:
             return {"status": "ERR", "message": "There is no such task"}
         return {"status": "OK", "message": json.dumps(_data)}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/tasks/<int:id>', methods=["PUT"])
+@app.route('/tasks/<int:task_id>', methods=["PUT"])
 def change_task():
     try:
         _json = request.json
@@ -40,17 +40,17 @@ def change_task():
             ChangeTaskInfo(_id, "vital", _vital)
         return {"status": "OK", "message": "Task successfully changed"}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/tasks/<int:id>', methods=["DELETE"])
-def delete_task(id):
+@app.route('/tasks/<int:task_id>', methods=["DELETE"])
+def delete_task(task_id):
     try:
-        if GetTask(id):
-            DeleteTask(id)
+        if GetTask(task_id):
+            DeleteTask(task_id)
             return {"status": "OK", "message": "Task successfully deleted"}
         else:
             return {"status": "ERR", "message": "Task doesn't exist"}
 
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}

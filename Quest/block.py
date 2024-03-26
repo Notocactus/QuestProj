@@ -12,7 +12,7 @@ def block(block_id):
             return {"status": "ERR", "message": "There are no tasks yet"}
         return {"status": "OK", "message": json.dumps(_data)}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/block/<int:id>', methods=["POST"])
@@ -34,7 +34,7 @@ def create_task():
 
         return {"status": "OK", "message": "Task successfully created"}
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/block/<int:block_id>', methods=["DELETE"])
@@ -47,5 +47,5 @@ def delete_block(block_id):
             return {"status": "ERR", "message": "Block doesn't exist"}
 
     except Exception as e:
-        return {"status": "ERR", "message": e}
+        return {"status": "ERR", "message": f"{e}"}
 

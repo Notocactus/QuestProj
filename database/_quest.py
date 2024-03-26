@@ -12,21 +12,21 @@ def GetAllQuests():
 
 
 def GetAllCreatedQuests(token):
-    id = GetUserByToken(token)["id"]
-    return select(engine, "quests", creator_id=id)
+    user_id = GetUserByToken(token)["id"]
+    return select(engine, "quests", creator_id=user_id)
 
 
 def GetAllParticipatedQuests(token):
-    id = GetUserByToken(token)["id"]
-    participations = select(engine, "participation", user_id=id)
+    user_id = GetUserByToken(token)["id"]
+    participations = select(engine, "participation", user_id=user_id)
     quests = []
     for i in participations:
         quests.append(GetQuestById(i["quest_id"]))
     return quests
 
 
-def GetQuestParticipants(id):
-    participants = select(engine, "participation", quest_id=id)
+def GetQuestParticipants(quest_id):
+    participants = select(engine, "participation", quest_id=quest_id)
     users = []
     for participant in participants:
         select(engine, "users", id=participant["user_id"])
@@ -39,23 +39,23 @@ def AddQuest(quest_name, short, quest_type, creator_id, start_time, end_time, qu
     insert(engine, "quests", columns, values)
 
 
-def ChangeQuestInfo(id, name, change):
+def ChangeQuestInfo(quest_id, name, change):
     update(engine,
            "quests",
            {name: change},
-           {'id': id})
+           {'id': quest_id})
 
-def DeleteQuestById(id):
-    delete(engine, 'quests', id=id)
-    blocks = select(engine, 'blocks', 'id', quest_id=id)
-    delete(engine, 'blocks', quest_id=id)
+
+def DeleteQuestById(quest_id):
+    delete(engine, 'quests', id=quest_id)
+    blocks = select(engine, 'blocks', 'id', quest_id=quest_id)
+    delete(engine, 'blocks', quest_id=quest_id)
     for block in blocks:
         delete(engine, 'tasks', block_id=block['id'])
 
 
-def RemoveUserFromQuest(id, token):
-    user = GetUserByToken(token)
-    delete(engine, 'participation', user_id=user['id'], quest_id=id)
+def RemoveUserFromQuest(quest_id, user_id):
+    delete(engine, 'participation', user_id=user_id, quest_id=quest_id)
 
 
 def CreateBlock(quest_id, block_num, block_type):
@@ -64,8 +64,8 @@ def CreateBlock(quest_id, block_num, block_type):
     insert(engine, "blocks", columns, values)
 
 
-def Change(id, change):
-    update(engine, "blocks", {"block_num": change}, {'id': id})
+def Change(block_id, change):
+    update(engine, "blocks", {"block_num": change}, {'id': block_id})
 
 
 def GetBlockByInfo(quest_id, block_num, block_type):

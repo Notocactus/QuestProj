@@ -1,6 +1,6 @@
 from flask import json
-from .srv import app, session, redirect, request, render_template
-from ..database import *
+from .srv import app, request
+from QuestProjFiles.database import *
 from time import time
 from hashlib import md5
 
@@ -47,7 +47,7 @@ def validate():
         _data = GetAuthToken(_session_hash)
         _ret = {"auth_token": _data["auth_token"]}
         if _data:
-            return {"status": "OK", "message": json.dumps(_data)}
+            return {"status": "OK", "message": json.dumps(_ret)}
         else:
             return {"status": "ERR", "message": "No such session"}
     except Exception as e:
@@ -91,4 +91,3 @@ def user():
 #             return {"status": "ERR", "message": "User not found"}
 #     except Exception as e:
 #         return {"status": "ERR", "message": e}
-

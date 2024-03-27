@@ -3,5 +3,4 @@ from .block import *
 from .quest import *
 from .tasks import *
 from .user import *
-from database import *
 

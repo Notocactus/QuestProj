@@ -1,11 +1,11 @@
 from flask import json
 
-from database import TokenExpired
-from .srv import app, session, redirect, request, render_template
+from ..database import TokenExpired
+from .srv import request
 
 from ..database._quest import *
-from ..database._block import GetAllTasks
-from ..database._tasks import GetUserProgress
+from QuestProjFiles.database._block import GetAllTasks
+from QuestProjFiles.database._tasks import GetUserProgress
 from .srv import app
 
 
@@ -25,9 +25,11 @@ def get_quests():
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
-        _data = [get_created_quests(_hauth_token), get_participated_quests(_hauth_token)]
+        _created_quests = get_created_quests(_hauth_token)
+        _participated_quests = get_participated_quests(_hauth_token)
+        _data = {"created_quests": _created_quests, "participated_quests": _participated_quests}
 
-        if len(_data) == 0:
+        if len(_created_quests) == 0 and len(_participated_quests) == 0:
             return {"status": "ERR", "message": "There are no quests yet"}
         return {"status": "OK", "message": json.dumps(_data)}
     except Exception as e:
@@ -42,10 +44,20 @@ def get_quest_participants(quest_id):
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(quest_id)
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
         if quest_id:
-            _data = GetQuestParticipants(quest_id)
+            _data = {"participants": GetQuestParticipants(quest_id)}
             if len(_data) == 0:
                 return {"status": "ERR", "message": "There are no participants yet"}
+            if _user['id'] == _quest["creator_id"]:
+                _data["is_creator"] = True
+            else:
+                _data["is_creator"] = False
             return {"status": "OK", "message": json.dumps(_data)}
         else:
             return {"status": "ERR", "message": "Something went terribly wrong"}
@@ -67,7 +79,7 @@ def create_quest():
         _json = request.json
         _quest_name = _json['quest_name']
         _short = _json['short']
-        _quest_type = _json['full']
+        _quest_type = _json['quest_type']
         _creator_id = GetUserByToken(_hauth_token)
         _start_time = _json['start_time']
         _end_time = _json['end_time']
@@ -112,11 +124,15 @@ def quest(quest_id):
                     _tasks = GetAllTasks(_block["id"])
                     _block["tasks_list"] = _tasks
                 _data["blocks_list"] = _blocks
-                if len(_data) == 0:
-                    return {"status": "ERR", "message": "There is no such Quest"}
-                else:
-                    return {"status": "OK", "message": json.dumps(_data)}
 
+            if len(_data) == 0:
+                return {"status": "ERR", "message": "There is no such Quest"}
+            else:
+                if _user['id'] == _quest["creator_id"]:
+                    _data["is_creator"] = True
+                else:
+                    _data["is_creator"] = False
+                return {"status": "OK", "message": json.dumps(_data)}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
     elif request.method == "PUT":
@@ -166,6 +182,9 @@ def delete_quest(quest_id):
         if not _user or not _quest:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
+        if _user['id'] != _quest["creator_id"]:
+            return {"status": "ERR", "message": "Unauthorized attempt"}
+
         if GetQuestById(quest_id):
             DeleteQuestById(quest_id)
             return {"status": "OK", "message": "Quest successfully deleted"}
@@ -189,6 +208,9 @@ def remove_participant(quest_id, user_id):
         if not _user or not _quest:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
+        if _user['id'] != _quest["creator_id"]:
+            return {"status": "ERR", "message": "Unauthorized attempt"}
+
         RemoveUserFromQuest(quest_id, user_id)
         return {"status": "OK", "message": "Participant removed successfully"}
     except Exception as e:
@@ -209,6 +231,9 @@ def create_block(quest_id):
 
             if not _user or not _quest:
                 return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+            if _user['id'] != _quest["creator_id"]:
+                return {"status": "ERR", "message": "Unauthorized attempt"}
 
             _json = request.json
             _quest_id = _json["quest_id"]
@@ -231,9 +256,19 @@ def get_blocks(quest_id):
             if TokenExpired(_hauth_token):
                 return {"status": "ERR", "message": "Registrate first"}
 
+            _user = GetUserByToken(_hauth_token)
+            _quest = GetQuestById(quest_id)
+
+            if not _user or not _quest:
+                return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
             _data = GetAllBlocks(quest_id)
             if len(_data) == 0:
                 return {"status": "ERR", "message": "There are no blocks yet"}
+            if _user['id'] == _quest["creator_id"]:
+                _data["is_creator"] = True
+            else:
+                _data["is_creator"] = False
             return {"status": "OK", "message": json.dumps(_data)}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
@@ -249,6 +284,9 @@ def get_blocks(quest_id):
 
             if not _user or not _quest:
                 return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+            if _user['id'] != _quest["creator_id"]:
+                return {"status": "ERR", "message": "Unauthorized attempt"}
 
             _json = request.json
             _blocks = _json['array_of_blocks']

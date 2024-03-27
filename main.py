@@ -1,13 +1,13 @@
 # import pymysql
 # import flask
 import datetime
-
-from db._db_config import engine
+#
+# from db._db_config import engine
 # from db_config import mysql
 from flask import *
 from werkzeug.security import generate_password_hash, check_password_hash
-
-from db._primitive import *
+#
+# from db._primitive import *
 
 
 # _password = "0hN0oo..."

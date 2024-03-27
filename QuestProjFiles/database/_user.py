@@ -22,6 +22,8 @@ def GetAuthToken(session_hash):
 
 def TokenExpired(hauth_token):
     _session = select(engine, "session", auth_token=hauth_token)
+    if not _session:
+        return True
     if _session["expiry_time"] < str(time()):
         delete(engine, "session", auth_token=hauth_token)
         return True
@@ -37,5 +39,6 @@ def GetUserByToken(hauth_token):
 def GetUserByInfo(last_name, first_name, patronym):
     return select(engine, "users", last_name=last_name, first_name=first_name, patronym=patronym)
 
-def DeleteUser(id):
-    delete(engine, 'users', id=id)
+
+def DeleteUser(user_id):
+    delete(engine, 'users', id=user_id)

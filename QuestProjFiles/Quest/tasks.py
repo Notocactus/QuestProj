@@ -1,8 +1,8 @@
 from flask import json
 
-from .srv import app, session, redirect, request, render_template
+from .srv import request
 
-from ..database._tasks import *
+from QuestProjFiles.database._tasks import *
 from .srv import app
 
 

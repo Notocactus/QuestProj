@@ -1,9 +1,8 @@
 from flask import json
 
-from ..database import TokenExpired, ChangeBlockInfo
-from .srv import app, session, redirect, request, render_template
+from .srv import app, request
 
-from ..database._block import *
+from QuestProjFiles.database._block import *
 
 
 @app.route('/block/<int:block_id>', methods={"PUT"})

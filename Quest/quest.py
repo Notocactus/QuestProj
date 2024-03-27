@@ -61,7 +61,7 @@ def create_quest():
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
-        # How to save files
+        # How to save files?
         _quest_image = request.files["quest_image"]
         _quest_image_url = ""
         _json = request.json
@@ -91,6 +91,7 @@ def quest(quest_id):
 
             if not _user or not _quest:
                 return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
             # if not creator
             if _user["id"] != _quest["creator_id"]:
                 _data = GetQuestById(quest_id)
@@ -194,10 +195,21 @@ def remove_participant(quest_id, user_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:id>/block', methods=['POST'])
-def create_block():
+@app.route('/quests/<int:quest_id>/block', methods=['POST'])
+def create_block(quest_id):
     if request.method == 'POST':
         try:
+            _header = request.headers
+            _hauth_token = _header["auth_token"]
+            if TokenExpired(_hauth_token):
+                return {"status": "ERR", "message": "Registrate first"}
+
+            _user = GetUserByToken(_hauth_token)
+            _quest = GetQuestById(quest_id)
+
+            if not _user or not _quest:
+                return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
             _json = request.json
             _quest_id = _json["quest_id"]
             _block_type = _json["block_type"]
@@ -209,11 +221,16 @@ def create_block():
             return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:id>/blocks', methods=['GET', "PUT"])
-def get_blocks(id):
+@app.route('/quests/<int:quest_id>/blocks', methods=['GET', "PUT"])
+def get_blocks(quest_id):
     if request.method == "GET":
         try:
-            _data = GetAllBlocks(id)
+            _header = request.headers
+            _hauth_token = _header["auth_token"]
+            if TokenExpired(_hauth_token):
+                return {"status": "ERR", "message": "Registrate first"}
+
+            _data = GetAllBlocks(quest_id)
             if len(_data) == 0:
                 return {"status": "ERR", "message": "There are no blocks yet"}
             return {"status": "OK", "message": json.dumps(_data)}
@@ -221,10 +238,21 @@ def get_blocks(id):
             return {"status": "ERR", "message": f"{e}"}
     else:
         try:
+            _header = request.headers
+            _hauth_token = _header["auth_token"]
+            if TokenExpired(_hauth_token):
+                return {"status": "ERR", "message": "Registrate first"}
+
+            _user = GetUserByToken(_hauth_token)
+            _quest = GetQuestById(quest_id)
+
+            if not _user or not _quest:
+                return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
             _json = request.json
             _blocks = _json['array_of_blocks']
-            for block in _blocks:
-                Change(block['id'], block['block_num'])
+            for _block in _blocks:
+                Change(_block['id'], _block['block_num'])
             return {'status': "OK", "message": "Order changed"}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}

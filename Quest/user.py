@@ -6,8 +6,8 @@ from hashlib import md5
 
 
 
-@app.route('/user/register', methods=["POST"])
-def register_user():
+@app.route('/user/login', methods=["POST"])
+def login_user():
     if request.method == 'POST':
         try:
             _time = str(time())
@@ -27,8 +27,12 @@ def register_user():
 
             _auth_token = md5(_token + _hash + _time)
 
-            _user_id = RegisterUser(_user[0], _user[1], _user[2])
-            RegisterSession(_user_id, _auth_token, time() + 2*7*24*60*60, _hash)
+            _user = GetUserByInfo(_user[0], _user[1], _user[2])
+            if not _user:
+                _user_id = RegisterUser(_user[0], _user[1], _user[2])
+                RegisterSession(_user_id, _auth_token, time() + 2*7*24*60*60, _hash)
+            else:
+                RegisterSession(_user["id"], _auth_token, time() + 2*7*24*60*60, _hash)
             return {"status": "OK", "message": "User registered"}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
@@ -57,6 +61,7 @@ def user():
         _hauth_token = _header["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
+
         _data = GetUserByToken(_hauth_token)
         if _data:
             return {"status": "OK", "message": json.dumps(_data)}

@@ -58,14 +58,14 @@ def RemoveUserFromQuest(quest_id, user_id):
     delete(engine, 'participation', user_id=user_id, quest_id=quest_id)
 
 
-def CreateBlock(quest_id, block_num, block_type):
-    columns = ["quest_id", "block_num", "block_type"]
-    values = [quest_id, block_num, block_type]
+def CreateBlock(quest_id, block_num, block_type, min_tasks):
+    columns = ["quest_id", "block_num", "block_type", "min_tasks"]
+    values = [quest_id, block_num, block_type, min_tasks]
     insert(engine, "blocks", columns, values)
 
 
-def Change(block_id, change):
-    update(engine, "blocks", {"block_num": change}, {'id': block_id})
+def ChangeBlockInfo(block_id, name, change):
+    update(engine, "blocks", {name: change}, {'id': block_id})
 
 
 def GetBlockByInfo(quest_id, block_num, block_type):

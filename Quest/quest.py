@@ -214,7 +214,8 @@ def create_block(quest_id):
             _quest_id = _json["quest_id"]
             _block_type = _json["block_type"]
             _block_num = _json["block_num"]
-            CreateBlock(_quest_id, _block_num, _block_type)
+            _min_tasks = _json["min_tasks"]
+            CreateBlock(_quest_id, _block_num, _block_type, _min_tasks)
             _data = GetBlockByInfo(_quest_id, _block_num, _block_type)
             return {"status": "OK", "message": _data['id']}
         except Exception as e:
@@ -252,7 +253,7 @@ def get_blocks(quest_id):
             _json = request.json
             _blocks = _json['array_of_blocks']
             for _block in _blocks:
-                Change(_block['id'], _block['block_num'])
+                ChangeBlockInfo(_block['id'], "block_num", _block['block_num'])
             return {'status': "OK", "message": "Order changed"}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}

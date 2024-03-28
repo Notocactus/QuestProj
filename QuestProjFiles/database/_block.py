@@ -30,3 +30,4 @@ def DeleteBlock(block_id):
     delete(engine, "blocks", id=block_id)
     for task in tasks:
         delete(engine, "blocks", id=task["id"])
+        delete(engine, "answers", task_id=task['id'])

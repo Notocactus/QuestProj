@@ -1,13 +1,32 @@
 from flask import json
 
 from .srv import app, request
+from ..database import GetUserProgress
 
-from QuestProjFiles.database._block import *
+from ..database._block import *
+from ..database._user import *
+from ..database._quest import *
 
 
-@app.route('/block/<int:block_id>', methods={"PUT"})
+@app.route('/block/<string:block_id>', methods={"PUT"})
 def change_block(block_id):
     try:
+        _block = GetBlockById(block_id)
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(_block["quest_id"])
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        # if is not creator
+        if _user['id'] != _quest["creator_id"]:
+            return {"response": "ERR", "message": "Unauthorized attempt"}
+
         _header = request.headers
         _hauth_token = _header["auth_token"]
         if TokenExpired(_hauth_token):
@@ -23,15 +42,33 @@ def change_block(block_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/block/<int:block_id>/tasks', methods=["GET"])
+@app.route('/block/<string:block_id>/tasks', methods=["GET"])
 def block(block_id):
     try:
+        _block = GetBlockById(block_id)
         _header = request.headers
         _hauth_token = _header["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
-        _data = GetAllTasks(block_id)
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(_block["quest_id"])
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        _tasks = GetAllTasks(block_id)
+        _tasks = sorted(_tasks, key=lambda d: d['task_num'])
+
+        # if is not creator
+        if _user['id'] != _quest["creator_id"]:
+            for _task in _tasks:
+                _progress = GetUserProgress(_user["id"], _task["id"])
+                _task["user_progress"] = _progress
+
+        _data = GetBlockById(block_id)
+        _data["tasks_list"] = _tasks
+
         if len(_data) == 0:
             return {"status": "ERR", "message": "There are no tasks yet"}
         return {"status": "OK", "message": json.dumps(_data)}
@@ -39,20 +76,25 @@ def block(block_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/block/<int:id>', methods=["POST"])
-def create_task():
+@app.route('/block/<string:block_id>', methods=["POST"])
+def create_task(block_id):
     try:
+        _block = GetBlockById(block_id)
         _header = request.headers
         _hauth_token = _header["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
-        # _user = GetUserByToken(_hauth_token)
-        # _quest = GetQuestById(quest_id)
-        #
-        # if not _user or not _quest:
-        #     return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(_block["quest_id"])
 
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        # if is not creator
+        if _user['id'] != _quest["creator_id"]:
+            return {"response": "ERR", "message": "Unauthorized attempt"}
+            
         _json = request.json
         _block_id = _json["block_id"]
         _task_num = _json["task_num"]
@@ -73,9 +115,25 @@ def create_task():
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/block/<int:block_id>', methods=["DELETE"])
+@app.route('/block/<string:block_id>', methods=["DELETE"])
 def delete_block(block_id):
     try:
+        _block = GetBlockById(block_id)
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(_block["quest_id"])
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        # if is not creator
+        if _user['id'] != _quest["creator_id"]:
+            return {"response": "ERR", "message": "Unauthorized attempt"}
+
         if GetBlockById(block_id):
             DeleteBlock(block_id)
             return {"status": "OK", "message": "Block successfully deleted"}

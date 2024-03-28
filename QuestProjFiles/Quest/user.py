@@ -5,20 +5,21 @@ from time import time
 from hashlib import md5
 
 
-
 @app.route('/user/login', methods=["POST"])
 def login_user():
     if request.method == 'POST':
         try:
             _time = str(time())
-            _json = request.json()
+            _json = request.json
             _timestamp = _json["timestamp"]
             _hash = _json["hash"]
             _user = _json["data"]["user"].split(' ')
             _role = _json["data"]["role"]
             _token = _json["data"]["token"]
             _nonce = _json["data"]["nonce"]
+
             _header = request.headers
+            # print(request.headers)
             _hauth_token = _header["hauth_token"]
 
             # validate the received values
@@ -41,7 +42,7 @@ def login_user():
 @app.route('/user/validate', methods=["POST"])
 def validate():
     try:
-        _json = request.json()
+        _json = request.json
         _session_hash = _json['session_hash']
 
         _data = GetAuthToken(_session_hash)
@@ -69,7 +70,6 @@ def user():
             return {"status": "ERR", "message": "Something went terribly wrong"}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
-
 
 
 # @app.route('/user/delete', methods=["DELETE"])

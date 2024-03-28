@@ -1,6 +1,7 @@
 from ._primitive import *
 from ._db_config import engine
 from ._user import GetUserByToken
+from ._block import GetAllTasks
 
 
 def GetQuestById(quest_id):
@@ -56,6 +57,11 @@ def DeleteQuestById(quest_id):
 
 def RemoveUserFromQuest(quest_id, user_id):
     delete(engine, 'participation', user_id=user_id, quest_id=quest_id)
+    _blocks = GetAllBlocks(quest_id)
+    for _block in _blocks:
+        _tasks = GetAllTasks(_block["id"])
+        for _task in _tasks:
+            delete(engine, "answer", user_id=user_id, task_id=_task["id"])
 
 
 def CreateBlock(quest_id, block_num, block_type, min_tasks):
@@ -73,4 +79,17 @@ def GetBlockByInfo(quest_id, block_num, block_type):
 
 
 def GetAllBlocks(quest_id):
-    select(engine, "blocks", quest_id=quest_id)
+    return select(engine, "blocks", quest_id=quest_id)
+
+
+def AddParticipant(quest_id, user_id):
+    columns = ["quest_id", "user_id"]
+    values = [quest_id, user_id]
+    insert(engine, "participation", columns, values)
+    _blocks = GetAllBlocks(quest_id)
+    for _block in _blocks:
+        _tasks = GetAllTasks(_block["id"])
+        for _task in _tasks:
+            task_columns = ["task_id", "user_id"]
+            task_values = [_task['id'], user_id]
+            insert(engine, "answer", task_columns, task_values)

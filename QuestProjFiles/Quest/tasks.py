@@ -2,22 +2,74 @@ from flask import json
 
 from .srv import request
 
-from QuestProjFiles.database._tasks import *
+from ..database._tasks import *
+from ..database import GetBlockById, GetQuestById, TokenExpired, GetUserByToken
 from .srv import app
 
 
-@app.route('/tasks/<int:task_id>', methods=["GET"])
+@app.route('/tasks/<string:task_id>', methods=["GET"])
 def task(task_id):
     try:
-        _data = GetTask(task_id)
-        if len(_data) == 0:
+        _task = GetTask(task_id)
+
+        if len(_task) == 0:
             return {"status": "ERR", "message": "There is no such task"}
-        return {"status": "OK", "message": json.dumps(_data)}
+
+        _block = GetBlockById(_task['block_id'])
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(_block["quest_id"])
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        # if is not creator
+        if _user['id'] != _quest["creator_id"]:
+            _ans = GetUserProgress(_user["id"], task_id)
+            _task['user_progress'] = _ans
+
+        return {"status": "OK", "message": json.dumps(_task)}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/tasks/<int:task_id>', methods=["PUT"])
+@app.route('/tasks/<string:task_id>/giveans', methods=["POST"])
+def give_answer(task_id):
+    try:
+        _task = GetTask(task_id)
+
+        if len(_task) == 0:
+            return {"status": "ERR", "message": "There is no such task"}
+
+        _block = GetBlockById(_task['block_id'])
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(_block["quest_id"])
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        _json = request.json
+        _status = _json['status']
+        _correct = _json['correct']
+        _points = _json["points"]
+
+        AddAnswer(_quest['id'], task_id, _user['id'], _status, _correct, _points)
+
+        return {"status": "OK", "message": json.dumps(_task)}
+    except Exception as e:
+        return {"status": "ERR", "message": f"{e}"}
+
+
+@app.route('/tasks/<string:task_id>', methods=["PUT"])
 def change_task():
     try:
         _json = request.json
@@ -43,7 +95,7 @@ def change_task():
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/tasks/<int:task_id>', methods=["DELETE"])
+@app.route('/tasks/<string:task_id>', methods=["DELETE"])
 def delete_task(task_id):
     try:
         if GetTask(task_id):

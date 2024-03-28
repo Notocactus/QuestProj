@@ -36,7 +36,7 @@ def get_quests():
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:quest_id>/participants', methods=["GET"])
+@app.route('/quests/<string:quest_id>/participants', methods=["GET"])
 def get_quest_participants(quest_id):
     try:
         _header = request.headers
@@ -89,7 +89,7 @@ def create_quest():
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:quest_id>', methods=["GET", "PUT"])
+@app.route('/quests/<string:quest_id>', methods=["GET", "PUT"])
 def quest(quest_id):
     if request.method == "GET":
         try:
@@ -113,7 +113,9 @@ def quest(quest_id):
                     for _task in _tasks:
                         _progress = GetUserProgress(_user["id"], _task["id"])
                         _task["user_progress"] = _progress
+                    _tasks = sorted(_tasks, key=lambda d: d["task_num"])
                     _block["tasks_list"] = _tasks
+                _blocks = sorted(_blocks, key=lambda d: d["block_num"])
                 _data["blocks_list"] = _blocks
 
             # if is creator
@@ -122,7 +124,9 @@ def quest(quest_id):
                 _blocks = GetAllBlocks(quest_id)
                 for _block in _blocks:
                     _tasks = GetAllTasks(_block["id"])
+                    _tasks = sorted(_tasks, key=lambda d: d["task_num"])
                     _block["tasks_list"] = _tasks
+                _blocks = sorted(_blocks, key=lambda d: d["block_num"])
                 _data["blocks_list"] = _blocks
 
             if len(_data) == 0:
@@ -151,7 +155,7 @@ def quest(quest_id):
             if _user["id"] != _quest["creator_id"]:
                 return {"status": "ERR", "message": "Unauthorized attempt"}
             _json = request.json
-            _new_name = _json["name"]
+            _new_name = _json["quest_name"]
             _new_short = _json["short"]
             _new_start = _json["start_time"]
             _new_end = _json["end_time"]
@@ -168,7 +172,7 @@ def quest(quest_id):
             return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:quest_id>', methods=["DELETE"])
+@app.route('/quests/<string:quest_id>', methods=["DELETE"])
 def delete_quest(quest_id):
     try:
         _header = request.headers
@@ -194,7 +198,7 @@ def delete_quest(quest_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:quest_id>/removeparticipant/<int:user_id>', methods=["DELETE"])
+@app.route('/quests/<string:quest_id>/removeparticipant/<string:user_id>', methods=["DELETE"])
 def remove_participant(quest_id, user_id):
     try:
         _header = request.headers
@@ -217,7 +221,7 @@ def remove_participant(quest_id, user_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:quest_id>/block', methods=['POST'])
+@app.route('/quests/<string:quest_id>/block', methods=['POST'])
 def create_block(quest_id):
     if request.method == 'POST':
         try:
@@ -247,7 +251,7 @@ def create_block(quest_id):
             return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<int:quest_id>/blocks', methods=['GET', "PUT"])
+@app.route('/quests/<string:quest_id>/blocks', methods=['GET', "PUT"])
 def get_blocks(quest_id):
     if request.method == "GET":
         try:
@@ -297,3 +301,40 @@ def get_blocks(quest_id):
             return {"status": "ERR", "message": f"{e}"}
 
 
+@app.route('/quest/<string:quest_id>/joinquest', methods=["POST"])
+def participate(quest_id):
+    try:
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(quest_id)
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        AddParticipant(_quest["id"], _user["id"])
+    except Exception as e:
+        return {"status": "ERR", "message": f"{e}"}
+
+
+@app.route('/quest/<string:quest_id>/quitquest', methods=["POST"])
+def quit(quest_id):
+    try:
+        _header = request.headers
+        _hauth_token = _header["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(quest_id)
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        RemoveUserFromQuest(_quest["id"], _user["id"])
+
+    except Exception as e:
+        return {"status": "ERR", "message": f"{e}"}

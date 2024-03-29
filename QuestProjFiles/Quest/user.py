@@ -12,7 +12,8 @@ def login_user():
     if request.method == 'POST':
         try:
             _time = str(time())
-            _json = request.form
+            _json = request.json
+
             _timestamp = _json["timestamp"]
             _hash = _json["hash"]
             _user = _json["user"].split()
@@ -24,22 +25,22 @@ def login_user():
             # # print(request.headers)
             # _hauth_token = _header["hauth_token"]
 
-
             # # validate the received values
             # if _hauth_token != _token:
             #     return {"status": "ERR", "message": "Unauthorized request"}
 
-            _auth_token = md5(_token + _hash + _time)
+            _auth_token = md5((_token + _hash + _time).encode()).hexdigest()
 
             _user_obj = GetUserByInfo(_user[0], _user[1], _user[2])
             if not _user_obj:
-                _user_id = RegisterUser(_user[0], _user[1], _user[2])
-                RegisterSession(_user_id, _auth_token, time() + 2*7*24*60*60, _hash)
+                _user_id = RegisterUser(_user[0], _user[1], _user[2])["id"]
+                print(_user_id)
+                RegisterSession(_user_id, f"{_auth_token}", time() + 2*7*24*60*60, _hash)
             else:
                 RegisterSession(_user_obj["id"], _auth_token, time() + 2*7*24*60*60, _hash)
             return {"status": "OK", "message": "User registered"}
         except Exception as e:
-            return {"status": "ERR", "message": f"{traceback.format_exc()}"}
+            return {"status": "ERR", "message": f"{e}"}
 
 
 @app.route('/user/validate', methods=["POST"])
@@ -68,6 +69,7 @@ def user():
             return {"status": "ERR", "message": "Registrate first"}
 
         _data = GetUserByToken(_hauth_token)
+        print(_data)
         if _data:
             return {"status": "OK", "message": json.dumps(_data)}
         else:

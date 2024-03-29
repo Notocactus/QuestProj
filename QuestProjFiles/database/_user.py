@@ -11,17 +11,17 @@ def RegisterUser(last_name, first_name, patronym):
 
 
 def RegisterSession(user_id, token, expiry_time, session_hash):
-    columns = ['user_id', 'token', 'expiry_time', 'session_hash']
+    columns = ['user_id', 'auth_token', 'expiry_time', 'session_hash']
     values = [user_id, token, expiry_time, session_hash]
     insert(engine, "session", columns, values)
 
 
 def GetAuthToken(session_hash):
-    return select(engine, "session", session_hash=session_hash)
+    return select(engine, "session", session_hash=session_hash)[0]
 
 
 def TokenExpired(hauth_token):
-    _session = select(engine, "session", auth_token=hauth_token)
+    _session = select(engine, "session", auth_token=hauth_token)[0]
     if not _session:
         return True
     if _session["expiry_time"] < str(time()):
@@ -32,12 +32,12 @@ def TokenExpired(hauth_token):
 
 
 def GetUserByToken(hauth_token):
-    _user_id = select(engine, "session", auth_token=hauth_token)["user_id"]
+    _user_id = select(engine, "session", auth_token=hauth_token)[0]["user_id"]
     return select(engine, "users", id=_user_id)[0]
 
 
 def GetUserByInfo(last_name, first_name, patronym):
-    return select(engine, "users", last_name=last_name, first_name=first_name, patronym=patronym)[0]
+    return select(engine, "users", last_name=last_name, first_name=first_name, patronym=patronym)
 
 
 def DeleteUser(user_id):

@@ -16,8 +16,9 @@ def task(task_id):
             return {"status": "ERR", "message": "There is no such task"}
 
         _block = GetBlockById(_task['block_id'])
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -46,8 +47,10 @@ def give_answer(task_id):
             return {"status": "ERR", "message": "There is no such task"}
 
         _block = GetBlockById(_task['block_id'])
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _json = request.json
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -57,7 +60,6 @@ def give_answer(task_id):
         if not _user or not _quest:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
-        _json = request.json
         _status = _json['status']
         _correct = _json['correct']
         _points = _json["points"]
@@ -70,9 +72,30 @@ def give_answer(task_id):
 
 
 @app.route('/tasks/<string:task_id>', methods=["PUT"])
-def change_task():
+def change_task(task_id):
     try:
+        _task = GetTask(task_id)
+
+        if len(_task) == 0:
+            return {"status": "ERR", "message": "There is no such task"}
+
+        _block = GetBlockById(_task['block_id'])
         _json = request.json
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(_block["quest_id"])
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        # if is not creator
+        if _user['id'] != _quest["creator_id"]:
+            return {"status": "ERR", "message": "Unauthorized attempt"}
         _id = _json["id"]
         _task_time = _json["task_time"]
         _description = _json["description"]

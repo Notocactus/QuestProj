@@ -12,8 +12,10 @@ from ..database._quest import *
 def change_block(block_id):
     try:
         _block = GetBlockById(block_id)
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _json = request.json
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -32,7 +34,6 @@ def change_block(block_id):
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
-        _json = request.json()
         _block_name = _json["block_name"]
         _block_num = _json["block_num"]
         _block_type = _json["block_type"]
@@ -46,8 +47,9 @@ def change_block(block_id):
 def block(block_id):
     try:
         _block = GetBlockById(block_id)
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -80,8 +82,10 @@ def block(block_id):
 def create_task(block_id):
     try:
         _block = GetBlockById(block_id)
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _json = request.json
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -94,8 +98,7 @@ def create_task(block_id):
         # if is not creator
         if _user['id'] != _quest["creator_id"]:
             return {"response": "ERR", "message": "Unauthorized attempt"}
-            
-        _json = request.json
+
         _block_id = _json["block_id"]
         _task_num = _json["task_num"]
         _task_type = _json["task_type"]
@@ -119,8 +122,9 @@ def create_task(block_id):
 def delete_block(block_id):
     try:
         _block = GetBlockById(block_id)
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 

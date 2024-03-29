@@ -4,8 +4,8 @@ from ..database import TokenExpired
 from .srv import request
 
 from ..database._quest import *
-from QuestProjFiles.database._block import GetAllTasks
-from QuestProjFiles.database._tasks import GetUserProgress
+from ..database._block import GetAllTasks
+from ..database._tasks import GetUserProgress
 from .srv import app
 
 
@@ -20,8 +20,9 @@ def get_participated_quests(token):
 @app.route('/quests', methods=['GET'])
 def get_quests():
     try:
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -39,8 +40,9 @@ def get_quests():
 @app.route('/quests/<string:quest_id>/participants', methods=["GET"])
 def get_quest_participants(quest_id):
     try:
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -68,15 +70,16 @@ def get_quest_participants(quest_id):
 @app.route('/quests/create', methods=["POST"])
 def create_quest():
     try:
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _json = request.json
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
         # How to save files?
         _quest_image = request.files["quest_image"]
         _quest_image_url = ""
-        _json = request.json
         _quest_name = _json['quest_name']
         _short = _json['short']
         _quest_type = _json['quest_type']
@@ -93,8 +96,9 @@ def create_quest():
 def quest(quest_id):
     if request.method == "GET":
         try:
-            _header = request.headers
-            _hauth_token = _header["auth_token"]
+            # _header = request.headers
+            # _hauth_token = _header["auth_token"]
+            _hauth_token = request.json["auth_token"]
             if TokenExpired(_hauth_token):
                 return {"status": "ERR", "message": "Registrate first"}
 
@@ -141,8 +145,10 @@ def quest(quest_id):
             return {"status": "ERR", "message": f"{e}"}
     elif request.method == "PUT":
         try:
-            _header = request.headers
-            _hauth_token = _header["auth_token"]
+            # _header = request.headers
+            # _hauth_token = _header["auth_token"]
+            _json = request.json
+            _hauth_token = _json["auth_token"]
             if TokenExpired(_hauth_token):
                 return {"status": "ERR", "message": "Registrate first"}
 
@@ -154,7 +160,7 @@ def quest(quest_id):
 
             if _user["id"] != _quest["creator_id"]:
                 return {"status": "ERR", "message": "Unauthorized attempt"}
-            _json = request.json
+
             _new_name = _json["quest_name"]
             _new_short = _json["short"]
             _new_start = _json["start_time"]
@@ -175,8 +181,9 @@ def quest(quest_id):
 @app.route('/quests/<string:quest_id>', methods=["DELETE"])
 def delete_quest(quest_id):
     try:
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -201,8 +208,9 @@ def delete_quest(quest_id):
 @app.route('/quests/<string:quest_id>/removeparticipant/<string:user_id>', methods=["DELETE"])
 def remove_participant(quest_id, user_id):
     try:
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -225,8 +233,10 @@ def remove_participant(quest_id, user_id):
 def create_block(quest_id):
     if request.method == 'POST':
         try:
-            _header = request.headers
-            _hauth_token = _header["auth_token"]
+            # _header = request.headers
+            # _hauth_token = _header["auth_token"]
+            _json = request.json
+            _hauth_token = _json["auth_token"]
             if TokenExpired(_hauth_token):
                 return {"status": "ERR", "message": "Registrate first"}
 
@@ -239,7 +249,6 @@ def create_block(quest_id):
             if _user['id'] != _quest["creator_id"]:
                 return {"status": "ERR", "message": "Unauthorized attempt"}
 
-            _json = request.json
             _quest_id = _json["quest_id"]
             _block_type = _json["block_type"]
             _block_num = _json["block_num"]
@@ -255,8 +264,9 @@ def create_block(quest_id):
 def get_blocks(quest_id):
     if request.method == "GET":
         try:
-            _header = request.headers
-            _hauth_token = _header["auth_token"]
+            # _header = request.headers
+            # _hauth_token = _header["auth_token"]
+            _hauth_token = request.json["auth_token"]
             if TokenExpired(_hauth_token):
                 return {"status": "ERR", "message": "Registrate first"}
 
@@ -278,8 +288,10 @@ def get_blocks(quest_id):
             return {"status": "ERR", "message": f"{e}"}
     else:
         try:
-            _header = request.headers
-            _hauth_token = _header["auth_token"]
+            # _header = request.headers
+            # _hauth_token = _header["auth_token"]
+            _json = request.json
+            _hauth_token = _json["auth_token"]
             if TokenExpired(_hauth_token):
                 return {"status": "ERR", "message": "Registrate first"}
 
@@ -292,7 +304,6 @@ def get_blocks(quest_id):
             if _user['id'] != _quest["creator_id"]:
                 return {"status": "ERR", "message": "Unauthorized attempt"}
 
-            _json = request.json
             _blocks = _json['array_of_blocks']
             for _block in _blocks:
                 ChangeBlockInfo(_block['id'], "block_num", _block['block_num'])
@@ -304,8 +315,9 @@ def get_blocks(quest_id):
 @app.route('/quest/<string:quest_id>/joinquest', methods=["POST"])
 def participate(quest_id):
     try:
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 

@@ -1,3 +1,5 @@
+import traceback
+
 from flask import json
 from .srv import app, request
 from QuestProjFiles.database import *
@@ -10,33 +12,34 @@ def login_user():
     if request.method == 'POST':
         try:
             _time = str(time())
-            _json = request.json
+            _json = request.form
             _timestamp = _json["timestamp"]
             _hash = _json["hash"]
-            _user = _json["data"]["user"].split(' ')
-            _role = _json["data"]["role"]
-            _token = _json["data"]["token"]
-            _nonce = _json["data"]["nonce"]
+            _user = _json["user"].split()
+            _role = _json["role"]
+            _token = _json["token"]
+            _nonce = _json["nonce"]
 
-            _header = request.headers
-            # print(request.headers)
-            _hauth_token = _header["hauth_token"]
+            # _header = request.headers
+            # # print(request.headers)
+            # _hauth_token = _header["hauth_token"]
 
-            # validate the received values
-            if _hauth_token != _token:
-                return {"status": "ERR", "message": "Unauthorized request"}
+
+            # # validate the received values
+            # if _hauth_token != _token:
+            #     return {"status": "ERR", "message": "Unauthorized request"}
 
             _auth_token = md5(_token + _hash + _time)
 
-            _user = GetUserByInfo(_user[0], _user[1], _user[2])
-            if not _user:
+            _user_obj = GetUserByInfo(_user[0], _user[1], _user[2])
+            if not _user_obj:
                 _user_id = RegisterUser(_user[0], _user[1], _user[2])
                 RegisterSession(_user_id, _auth_token, time() + 2*7*24*60*60, _hash)
             else:
-                RegisterSession(_user["id"], _auth_token, time() + 2*7*24*60*60, _hash)
+                RegisterSession(_user_obj["id"], _auth_token, time() + 2*7*24*60*60, _hash)
             return {"status": "OK", "message": "User registered"}
         except Exception as e:
-            return {"status": "ERR", "message": f"{e}"}
+            return {"status": "ERR", "message": f"{traceback.format_exc()}"}
 
 
 @app.route('/user/validate', methods=["POST"])
@@ -58,8 +61,9 @@ def validate():
 @app.route('/user/user', methods=["GET"])
 def user():
     try:
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        # _header = request.headers
+        # _hauth_token = _header["auth_token"]
+        _hauth_token = request.json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 

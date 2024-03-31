@@ -22,7 +22,7 @@ def AddAnswer(quest_id, task_id, user_id, status, correct, points):
     _participation = select(engine, "participation", quest_id=quest_id, user_id=user_id)
     _user_score = _participation["user_score"]
     _user_score += points
-    update(engine, "participation", {"user_score": _user_score}, {"id":_participation["id"]})
+    update(engine, "participation", {"user_score": _user_score}, {"id": _participation["id"]})
 
 
 def DeleteTask(task_id):

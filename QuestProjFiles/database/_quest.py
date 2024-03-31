@@ -5,7 +5,7 @@ from ._block import GetAllTasks
 
 
 def GetQuestById(quest_id):
-    return select(engine, "quests", quest_id=quest_id)
+    return select(engine, "quests", id=quest_id)[0]
 
 
 def GetAllQuests():
@@ -34,6 +34,14 @@ def GetQuestParticipants(quest_id):
     return users
 
 
+def GetParticipation(quest_id, user_id):
+    return select(engine, "participation", quest_id=quest_id, user_id=user_id)[0]
+
+
+def GetResults(quest_id):
+    return select(engine, "participation", quest_id=quest_id, role_id='0')
+
+
 def AddQuest(quest_name, short, quest_type, creator_id, start_time, end_time, quest_image):
     columns = ["quest_name", "short", "quest_type", "creator_id", "start_time", "end_time", "quest_image"]
     values = [quest_name, short, quest_type, creator_id, start_time, end_time, quest_image]
@@ -49,9 +57,13 @@ def ChangeQuestInfo(quest_id, name, change):
 
 def DeleteQuestById(quest_id):
     delete(engine, 'quests', id=quest_id)
-    blocks = select(engine, 'blocks', 'id', quest_id=quest_id)
+    delete(engine, 'participation', quest_id=quest_id)
+    blocks = select(engine, 'blocks', quest_id=quest_id)
     delete(engine, 'blocks', quest_id=quest_id)
     for block in blocks:
+        tasks = select(engine, 'tasks', block_id=block["id"])
+        for task in tasks:
+            delete(engine, "answers", task_id=task['id'])
         delete(engine, 'tasks', block_id=block['id'])
 
 

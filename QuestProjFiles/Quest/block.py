@@ -43,7 +43,7 @@ def change_block(block_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/block/<string:block_id>/tasks', methods=["GET"])
+@app.route('/block/<string:block_id>', methods=["GET"])
 def block(block_id):
     try:
         _block = GetBlockById(block_id)
@@ -78,7 +78,7 @@ def block(block_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/block/<string:block_id>', methods=["POST"])
+@app.route('/block/<string:block_id>/tasks', methods=["POST"])
 def create_task(block_id):
     try:
         _block = GetBlockById(block_id)

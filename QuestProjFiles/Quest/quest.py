@@ -9,14 +9,6 @@ from ..database._tasks import GetUserProgress
 from .srv import app
 
 
-def get_created_quests(token):
-    return {GetAllCreatedQuests(token)}
-
-
-def get_participated_quests(token):
-    return {GetAllParticipatedQuests(token)}
-
-
 @app.route('/quests', methods=['GET'])
 def get_quests():
     try:
@@ -26,8 +18,8 @@ def get_quests():
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
-        _created_quests = get_created_quests(_hauth_token)
-        _participated_quests = get_participated_quests(_hauth_token)
+        _created_quests = GetAllCreatedQuests(_hauth_token)
+        _participated_quests = GetAllParticipatedQuests(_hauth_token)
         _data = {"created_quests": _created_quests, "participated_quests": _participated_quests}
 
         if len(_created_quests) == 0 and len(_participated_quests) == 0:
@@ -78,12 +70,12 @@ def create_quest():
             return {"status": "ERR", "message": "Registrate first"}
 
         # How to save files?
-        _quest_image = request.files["quest_image"]
+        # _quest_image = request.files["quest_image"]
         _quest_image_url = ""
         _quest_name = _json['quest_name']
         _short = _json['short']
         _quest_type = _json['quest_type']
-        _creator_id = GetUserByToken(_hauth_token)
+        _creator_id = GetUserByToken(_hauth_token)['id']
         _start_time = _json['start_time']
         _end_time = _json['end_time']
         AddQuest(_quest_name, _short, _quest_type, _creator_id, _start_time, _end_time, _quest_image_url)
@@ -140,6 +132,8 @@ def quest(quest_id):
                     _data["is_creator"] = True
                 else:
                     _data["is_creator"] = False
+                _participation = GetParticipation(quest_id, _user["id"])
+                _data['role'] = _participation['role_id']
                 return {"status": "OK", "message": json.dumps(_data)}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
@@ -249,12 +243,11 @@ def create_block(quest_id):
             if _user['id'] != _quest["creator_id"]:
                 return {"status": "ERR", "message": "Unauthorized attempt"}
 
-            _quest_id = _json["quest_id"]
             _block_type = _json["block_type"]
             _block_num = _json["block_num"]
             _min_tasks = _json["min_tasks"]
-            CreateBlock(_quest_id, _block_num, _block_type, _min_tasks)
-            _data = GetBlockByInfo(_quest_id, _block_num, _block_type)
+            CreateBlock(quest_id, _block_num, _block_type, _min_tasks)
+            _data = GetBlockByInfo(quest_id, _block_num, _block_type)
             return {"status": "OK", "message": _data['id']}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
@@ -312,7 +305,7 @@ def get_blocks(quest_id):
             return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quest/<string:quest_id>/joinquest', methods=["POST"])
+@app.route('/quests/<string:quest_id>/joinquest', methods=["POST"])
 def participate(quest_id):
     try:
         # _header = request.headers
@@ -332,7 +325,7 @@ def participate(quest_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quest/<string:quest_id>/quitquest', methods=["POST"])
+@app.route('/quests/<string:quest_id>/quitquest', methods=["POST"])
 def quit(quest_id):
     try:
         _header = request.headers
@@ -348,5 +341,71 @@ def quit(quest_id):
 
         RemoveUserFromQuest(_quest["id"], _user["id"])
 
+    except Exception as e:
+        return {"status": "ERR", "message": f"{e}"}
+
+
+@app.route("/quests/<string:quest_id>/delete", methods=["DELETE"])
+def delete_quest(quest_id):
+    try:
+        _json = request.json
+        _hauth_token = _json["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(quest_id)
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        if _user['id'] != _quest["creator_id"]:
+            return {"status": "ERR", "message": "Unauthorized attempt"}
+
+        DeleteQuestById(quest_id)
+        return {"status": "OK", "message": "Quest deleted successfully"}
+    except Exception as e:
+        return {"status": "ERR", "message": f"{e}"}
+
+
+@app.route("/quests/<string:quest_id>/results", methods=["GET"])
+def results(quest_id):
+    try:
+        _json = request.json
+        _hauth_token = _json["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(quest_id)
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        _data = {"results": GetResults(quest_id)}
+        return {"status": "OK", "message": json.dumps(_data)}
+    except Exception as e:
+        return {"status": "ERR", "message": f"{e}"}
+
+
+@app.route("/quest/<string:quest_id>/points", methods=["GET"])
+def points(quest_id):
+    try:
+        _json = request.json
+        _hauth_token = _json["auth_token"]
+        if TokenExpired(_hauth_token):
+            return {"status": "ERR", "message": "Registrate first"}
+
+        _user = GetUserByToken(_hauth_token)
+        _quest = GetQuestById(quest_id)
+
+        if not _user or not _quest:
+            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+        if _user['id'] == _quest["creator_id"]:
+            return {"status": "ERR", "message": "Creator can't participate"}
+
+        _data = {"points": GetParticipation(quest_id, _user["id"])["user_score"]}
+        return {"status": "OK", "message": json.dumps(_data)}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}

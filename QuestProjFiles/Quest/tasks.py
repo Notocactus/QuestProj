@@ -7,7 +7,7 @@ from ..database import GetBlockById, GetQuestById, TokenExpired, GetUserByToken
 from .srv import app
 
 
-@app.route('/tasks/<string:task_id>', methods=["GET"])
+@app.route('/task/<string:task_id>', methods=["GET"])
 def task(task_id):
     try:
         _task = GetTask(task_id)
@@ -38,7 +38,7 @@ def task(task_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/tasks/<string:task_id>/giveans', methods=["POST"])
+@app.route('/task/<string:task_id>/giveans', methods=["POST"])
 def give_answer(task_id):
     try:
         _task = GetTask(task_id)
@@ -71,7 +71,7 @@ def give_answer(task_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/tasks/<string:task_id>', methods=["PUT"])
+@app.route('/task/<string:task_id>', methods=["PUT"])
 def change_task(task_id):
     try:
         _task = GetTask(task_id)
@@ -118,7 +118,7 @@ def change_task(task_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/tasks/<string:task_id>', methods=["DELETE"])
+@app.route('/task/<string:task_id>', methods=["DELETE"])
 def delete_task(task_id):
     try:
         if GetTask(task_id):

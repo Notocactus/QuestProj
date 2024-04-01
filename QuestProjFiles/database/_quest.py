@@ -87,7 +87,7 @@ def ChangeBlockInfo(block_id, name, change):
 
 
 def GetBlockByInfo(quest_id, block_num, block_type):
-    return select(engine, "blocks", quest_id=quest_id, block_num=block_num, block_type=block_type)
+    return select(engine, "blocks", quest_id=quest_id, block_num=block_num, block_type=block_type)[0]
 
 
 def GetAllBlocks(quest_id):

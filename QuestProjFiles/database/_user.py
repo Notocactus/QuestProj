@@ -37,7 +37,10 @@ def GetUserByToken(hauth_token):
 
 
 def GetUserByInfo(last_name, first_name, patronym):
-    return select(engine, "users", last_name=last_name, first_name=first_name, patronym=patronym)
+    data = select(engine, "users", last_name=last_name, first_name=first_name, patronym=patronym)
+    if len(data) > 0:
+        return data[0]
+    return None
 
 
 def DeleteUser(user_id):

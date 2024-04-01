@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from flask import json
 
 from .srv import app, request
@@ -72,6 +74,10 @@ def block(block_id):
         _data["tasks_list"] = _tasks
 
         if len(_data) == 0:
+            if _user['id'] == _quest["creator_id"]:
+                _data["is_creator"] = True
+            else:
+                _data["is_creator"] = False
             return {"status": "ERR", "message": "There are no tasks yet"}
         return {"status": "OK", "message": json.dumps(_data)}
     except Exception as e:
@@ -108,12 +114,12 @@ def create_task(block_id):
         _min = _json["min_points"]
         _vital = _json["vital"]
 
-        CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _max, _min, _vital)
-
+        _task = CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _max, _min, _vital)
+        _ret = {"task_id": _task["id"]}
         if _vital == "true" or _vital is True:
             ChangeBlockVits(_block_id)
 
-        return {"status": "OK", "message": "Task successfully created"}
+        return {"status": "OK", "message": _ret}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 

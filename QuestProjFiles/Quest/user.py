@@ -1,18 +1,18 @@
-import traceback
+# -*- coding: utf-8 -*-
 
 from flask import json
 from .srv import app, request
-from QuestProjFiles.database import *
+from ..database import *
 from time import time
 from hashlib import md5
 
 
-@app.route('/user/login', methods=["POST"])
+@app.route('/khan/user/login', methods=["POST"])
 def login_user():
     if request.method == 'POST':
         try:
             _time = str(time())
-            _json = request.json
+            _json = request.form
 
             _timestamp = _json["timestamp"]
             _hash = _json["hash"]
@@ -34,24 +34,24 @@ def login_user():
             _user_obj = GetUserByInfo(_user[0], _user[1], _user[2])
             if not _user_obj:
                 _user_id = RegisterUser(_user[0], _user[1], _user[2])["id"]
-                print(_user_id)
-                RegisterSession(_user_id, f"{_auth_token}", time() + 2*7*24*60*60, _hash)
             else:
-                RegisterSession(_user_obj["id"], _auth_token, time() + 2*7*24*60*60, _hash)
+                _user_id = _user_obj["id"]
+            RegisterSession(_user_id, _auth_token, time() + 2*7*24*60*60, _hash)
             return {"status": "OK", "message": "User registered"}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/user/validate', methods=["POST"])
+@app.route('/khan/user/validate', methods=["POST"])
 def validate():
     try:
-        _json = request.json
+        _json = request.data
+        _json = json.loads(_json)
         _session_hash = _json['session_hash']
 
         _data = GetAuthToken(_session_hash)
-        _ret = {"auth_token": _data["auth_token"]}
         if _data:
+            _ret = {"auth_token": _data["auth_token"]}
             return {"status": "OK", "message": json.dumps(_ret)}
         else:
             return {"status": "ERR", "message": "No such session"}
@@ -59,7 +59,7 @@ def validate():
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/user/user', methods=["GET"])
+@app.route('/khan/user/user', methods=["GET"])
 def user():
     try:
         # _header = request.headers
@@ -78,7 +78,7 @@ def user():
         return {"status": "ERR", "message": f"{e}"}
 
 
-# @app.route('/user/delete', methods=["DELETE"])
+# @app.route('/khan/user/delete', methods=["DELETE"])
 # def delete_user():
 #     try:
 #         _json = request.json

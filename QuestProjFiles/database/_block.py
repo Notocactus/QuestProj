@@ -10,6 +10,11 @@ def CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _max_
     columns = ["block_id", "task_num", "task_type", "task_time", "description", "max_points", "min_points", "vital"]
     values = [_block_id, _task_num, _task_type, _task_time, _description, _max_points, _min_points, _vital]
     insert(engine, "tasks", columns, values)
+    return select(engine, 'tasks', block_id=_block_id,
+                  task_num=_task_num,
+                  _task_type=_task_type,
+                  description=_description,
+                  vital=_vital)[0]
 
 
 def GetBlockById(block_id):

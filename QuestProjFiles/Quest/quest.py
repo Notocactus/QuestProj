@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from flask import json
 
 from ..database import TokenExpired
@@ -172,33 +174,6 @@ def quest(quest_id):
             return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<string:quest_id>', methods=["DELETE"])
-def delete_quest(quest_id):
-    try:
-        # _header = request.headers
-        # _hauth_token = _header["auth_token"]
-        _hauth_token = request.json["auth_token"]
-        if TokenExpired(_hauth_token):
-            return {"status": "ERR", "message": "Registrate first"}
-
-        _user = GetUserByToken(_hauth_token)
-        _quest = GetQuestById(quest_id)
-
-        if not _user or not _quest:
-            return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
-
-        if _user['id'] != _quest["creator_id"]:
-            return {"status": "ERR", "message": "Unauthorized attempt"}
-
-        if GetQuestById(quest_id):
-            DeleteQuestById(quest_id)
-            return {"status": "OK", "message": "Quest successfully deleted"}
-        else:
-            return {"status": "ERR", "message": "Quest doesn't exist"}
-    except Exception as e:
-        return {"status": "ERR", "message": f"{e}"}
-
-
 @app.route('/quests/<string:quest_id>/removeparticipant/<string:user_id>', methods=["DELETE"])
 def remove_participant(quest_id, user_id):
     try:
@@ -248,7 +223,8 @@ def create_block(quest_id):
             _min_tasks = _json["min_tasks"]
             CreateBlock(quest_id, _block_num, _block_type, _min_tasks)
             _data = GetBlockByInfo(quest_id, _block_num, _block_type)
-            return {"status": "OK", "message": _data['id']}
+            _ret = {"block_id": _data['id']}
+            return {"status": "OK", "message": _ret}
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
 
@@ -269,7 +245,7 @@ def get_blocks(quest_id):
             if not _user or not _quest:
                 return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
-            _data = GetAllBlocks(quest_id)
+            _data = {"blocks_list": GetAllBlocks(quest_id)}
             if len(_data) == 0:
                 return {"status": "ERR", "message": "There are no blocks yet"}
             if _user['id'] == _quest["creator_id"]:
@@ -297,7 +273,7 @@ def get_blocks(quest_id):
             if _user['id'] != _quest["creator_id"]:
                 return {"status": "ERR", "message": "Unauthorized attempt"}
 
-            _blocks = _json['array_of_blocks']
+            _blocks = _json['blocks_list']
             for _block in _blocks:
                 ChangeBlockInfo(_block['id'], "block_num", _block['block_num'])
             return {'status': "OK", "message": "Order changed"}
@@ -321,11 +297,12 @@ def participate(quest_id):
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         AddParticipant(_quest["id"], _user["id"])
+        return {"status": "OK", "message": "User joined quest successfully"}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<string:quest_id>/quitquest', methods=["POST"])
+@app.route('/quests/<string:quest_id>/quitquest', methods=["DELETE"])
 def quit(quest_id):
     try:
         _header = request.headers
@@ -340,7 +317,7 @@ def quit(quest_id):
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         RemoveUserFromQuest(_quest["id"], _user["id"])
-
+        return {"status": "ERR", "message": "User quit quest successfully"}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 

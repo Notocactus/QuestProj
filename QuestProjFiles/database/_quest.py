@@ -20,16 +20,18 @@ def GetAllCreatedQuests(token):
     _data = select(engine, "quests", creator_id=user_id)
     if len(_data) > 0:
         return _data
-    return {}
+    return []
 
 
 def GetAllParticipatedQuests(token):
     user_id = GetUserByToken(token)["id"]
     participations = select(engine, "participation", user_id=user_id)
-    quests = []
-    for i in participations:
-        quests.append(GetQuestById(i["quest_id"]))
-    return quests
+    if len(participations) > 0:
+        quests = []
+        for i in participations:
+            quests.append(GetQuestById(i["quest_id"]))
+        return quests
+    return []
 
 
 def GetQuestParticipants(quest_id):

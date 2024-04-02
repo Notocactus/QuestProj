@@ -38,12 +38,14 @@ def insert(engine, tab_name, columns, values):
 
 def delete(engine, tab_name, **options):
     connection = engine.connect()
+    trans = connection.begin()
     query = f"DELETE FROM {tab_name}"
     if len(options) > 0:
         opts = " AND ".join([f"{k} = '{v}'"
                              for k, v in options.items()])
         query += " WHERE " + opts
     connection.execute(text(query))
+    trans.commit()
     connection.close()
 
 

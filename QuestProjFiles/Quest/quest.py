@@ -27,6 +27,7 @@ def get_quests():
 
         _created_quests = GetAllCreatedQuests(_hauth_token)
         _participated_quests = GetAllParticipatedQuests(_hauth_token)
+
         _data = {"created_quests": _created_quests, "participated_quests": _participated_quests}
 
         if len(_created_quests) == 0 and len(_participated_quests) == 0:

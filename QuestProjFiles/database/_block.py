@@ -16,13 +16,18 @@ def CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _ques
     values = [_block_id, _task_num, _task_type, _task_time, _description, _question,
               _max_points, _min_points, _answer, _vital]
     insert(engine, "tasks", columns, values)
+
+
+def GetTaskByInfo(_block_id, _task_num, _task_type, _task_time, _description, _question,
+                  _max_points, _min_points, _answer, _vital):
     return select(engine, 'tasks', block_id=_block_id,
                   task_num=_task_num,
                   task_type=_task_type,
+                  task_time=_task_time,
                   description=_description,
                   question=_question,
                   answer=_answer,
-                  vital=_vital)[0]
+                  vital=_vital)
 
 
 def GetBlockById(block_id):
@@ -34,11 +39,13 @@ def GetBlockById(block_id):
 
 def ChangeBlockVits(block_id):
     vitals = GetBlockById(block_id)["vits"]
-    update(engine, "blocks", {"vitals": vitals + 1}, {'id': block_id})
+    update(engine, "blocks", {"vits": vitals + 1}, {'id': block_id})
 
 
 def ChangeBlock(block_id, block_name, block_num, block_type, min_tasks):
-    update(engine, "blocks", {"block_name": block_name, "block_num": block_num, "block_type": block_type, "min_tasks": min_tasks}, {"id": block_id})
+    update(engine, "blocks",
+           {"block_name": block_name, "block_num": block_num, "block_type": block_type, "min_tasks": min_tasks},
+           {"id": block_id})
 
 
 def DeleteBlock(block_id):
@@ -47,3 +54,12 @@ def DeleteBlock(block_id):
     for task in tasks:
         delete(engine, "blocks", id=task["id"])
         delete(engine, "answers", task_id=task['id'])
+
+
+# def DuplicateTask(_new_block_id, _block_id, _task_num, _task_type, _task_time,
+#                   _description, _question, _max_points, _min_points, _answer, _vital):
+#     num_tasks = len(GetTaskByInfo(_block_id, _task_num, _task_type, _task_time,
+#                   _description, _question, _max_points, _min_points, _answer, _vital))
+#
+#     CreateTask(_new_block_id, _task_num, _task_type, _task_time, _description, _question,
+#                _max_points, _min_points, _answer, _vital)

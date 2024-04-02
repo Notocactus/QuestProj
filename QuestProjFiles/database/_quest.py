@@ -11,6 +11,11 @@ def GetQuestById(quest_id):
     return {}
 
 
+# def GetQuestByInfo(quest_name, short, quest_type, creator_id, start_time, end_time, quest_image):
+#     select(engine, "quests", quest_name=quest_name, short=short, quest_type=quest_type,
+#            creator_id=creator_id, start_time=start_time, )
+
+
 def GetAllQuests():
     return select(engine, "quests")
 
@@ -124,4 +129,13 @@ def AddParticipant(quest_id, user_id):
         for _task in _tasks:
             task_columns = ["task_id", "user_id"]
             task_values = [_task['id'], user_id]
-            insert(engine, "answer", task_columns, task_values)
+            insert(engine, "answers", task_columns, task_values)
+
+# def DuplicateQuest(quest_id):
+#
+#     _blocks = GetAllBlocks(quest_id)
+#     for _block in _blocks:
+#
+#
+# def DuplicateBlock(new_quest_id, block_name, block_num, block_type, min_tasks):
+#     CreateBlock(new_quest_id, block_name, block_num, block_type, min_tasks)

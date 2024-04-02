@@ -5,7 +5,7 @@ from ..database import TokenExpired
 from .srv import request
 
 from ..database._quest import *
-from ..database._block import GetAllTasks
+from ..database._block import GetAllTasks, GetBlockById
 from ..database._tasks import GetUserProgress
 from .srv import app
 
@@ -406,3 +406,63 @@ def points(quest_id):
         return json.dumps({"status": "OK", "message": _data}, ensure_ascii=False).encode("utf8")
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
+
+
+# @app.route("/quests/<string:quest_id>/duplicate", methods=["POST"])
+# def duplicate_quest(quest_id):
+#     try:
+#         _json = request.data
+#         _json = json.loads(_json)
+#
+#         _hauth_token = _json["auth_token"]
+#         if TokenExpired(_hauth_token):
+#             return {"status": "ERR", "message": "Registrate first"}
+#
+#         _user = GetUserByToken(_hauth_token)
+#         _quest = GetQuestById(quest_id)
+#
+#         if len(_user) == 0 or len(_quest) == 0:
+#             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+#
+#         if _user['id'] != _quest["creator_id"]:
+#             return {"status": "ERR", "message": "Unauthorized attempt"}
+#
+#         AddQuest(_quest["quest_name"], _quest["short"], _quest["quest_type"],
+#                  _quest["creator_id"], _quest["start_time"], _quest["end_time"], _quest["quest_image"])
+#         _new_quest_id =
+#         DuplicateQuest(_new_quest_id)
+#         return {"status": "OK", "message": "Quest duplicated successfully"}
+#     except Exception as e:
+#         return {"status": "ERR", "message": f"{e}"}
+
+
+# @app.route("/quests/<string:quest_id>/duplicateblock", methods=["POST"])
+# def duplicate_block(quest_id):
+#     try:
+#         _json = request.data
+#         _json = json.loads(_json)
+#
+#         _hauth_token = _json["auth_token"]
+#         if TokenExpired(_hauth_token):
+#             return {"status": "ERR", "message": "Registrate first"}
+#
+#         _user = GetUserByToken(_hauth_token)
+#         _quest = GetQuestById(quest_id)
+#
+#         if len(_user) == 0 or len(_quest) == 0:
+#             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+#
+#         if _user['id'] != _quest["creator_id"]:
+#             return {"status": "ERR", "message": "Unauthorized attempt"}
+#
+#         _block_id = _json["block_id"]
+#         _block = GetBlockById(_block_id)
+#         if len(_block) == 0:
+#             return {"status": "ERR", "message": "Block doesn't exist"}
+#
+#         DuplicateBlock(quest_id, _block["block_name"], _block["block_num"],
+#                        _block["block_type"], _block["min_tasks"])
+#         return {"status": "OK", "message": "Block duplicated successfully"}
+#     except Exception as e:
+#         return {"status": "ERR", "message": f"{e}"}
+

@@ -6,8 +6,9 @@ from .srv import app, request
 from ..database import GetUserProgress, ChangeTaskInfo
 
 from ..database._block import *
-from ..database._user import *
-from ..database._quest import *
+from ..database._user import TokenExpired, GetUserByToken
+from ..database._quest import GetQuestById
+from ..database._tasks import GetTask
 
 
 @app.route('/block/<string:block_id>', methods={"PUT"})
@@ -120,8 +121,10 @@ def create_task(block_id):
         _answer = _json["answer"]
         _vital = _json["vital"]
 
-        _task = CreateTask(block_id, _task_num, _task_type, _task_time,
-                           _description, _question, _max, _min, _answer, _vital)
+        CreateTask(block_id, _task_num, _task_type, _task_time,
+                   _description, _question, _max, _min, _answer, _vital)
+        _task = GetTaskByInfo(block_id, _task_num, _task_type, _task_time,
+                              _description, _question, _max, _min, _answer, _vital)[0]
         _ret = {"task_id": _task["id"]}
         if _vital == "1" or int(_vital) == 1:
             ChangeBlockVits(block_id)
@@ -195,3 +198,40 @@ def delete_block(block_id):
             return {"status": "ERR", "message": "Block doesn't exist"}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
+
+
+# @app.route('/block/<string:block_id>/duplicate', methods=["POST"])
+# def duplicate_task(block_id):
+#     try:
+#         _block = GetBlockById(block_id)
+#         if len(_block) == 0:
+#             return {"status": "ERR", "message": "Block doesn't exist"}
+#
+#         _json = request.data
+#         _json = json.loads(_json)
+#
+#         _hauth_token = _json["auth_token"]
+#         if TokenExpired(_hauth_token):
+#             return {"status": "ERR", "message": "Registrate first"}
+#
+#         _user = GetUserByToken(_hauth_token)
+#         _quest = GetQuestById(_block["quest_id"])
+#
+#         if len(_user) == 0 or len(_quest) == 0:
+#             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+#
+#         # if is not creator
+#         if _user['id'] != _quest["creator_id"]:
+#             return {"status": "ERR", "message": "Unauthorized attempt"}
+#
+#         _task_id = _json["task_id"]
+#         _task = GetTask(_task_id)
+#         if len(_task) == 0:
+#             return {"status": "ERR", "message": "There is no such task"}
+#
+#         DuplicateTask(block_id, _task["task_num"], _task["task_type"],
+#                       _task["task_time"], _task["description"], _task["question"],
+#                       _task["max_points"], _task["min_points"], _task["answer"], _task["vital"])
+#         return {'status': 'OK', 'message': 'Task duplicated successfully'}
+#     except Exception as e:
+#         return {"status": "ERR", "message": f"{e}"}

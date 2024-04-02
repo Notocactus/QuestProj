@@ -341,7 +341,7 @@ def delete_quest(quest_id):
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(quest_id)
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         if _user['id'] != _quest["creator_id"]:

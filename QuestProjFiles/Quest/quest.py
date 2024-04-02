@@ -209,9 +209,9 @@ def remove_participant(quest_id, user_id):
 def create_block(quest_id):
     if request.method == 'POST':
         try:
-            # _header = request.headers
-            # _hauth_token = _header["auth_token"]
-            _json = request.json
+            _json = request.data
+            _json = json.loads(_json)
+
             _hauth_token = _json["auth_token"]
             if TokenExpired(_hauth_token):
                 return {"status": "ERR", "message": "Registrate first"}
@@ -219,7 +219,7 @@ def create_block(quest_id):
             _user = GetUserByToken(_hauth_token)
             _quest = GetQuestById(quest_id)
 
-            if not _user or not _quest:
+            if len(_user) == 0 or len(_quest) == 0:
                 return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
             if _user['id'] != _quest["creator_id"]:
@@ -229,10 +229,10 @@ def create_block(quest_id):
             _block_type = _json["block_type"]
             _block_num = _json["block_num"]
             _min_tasks = _json["min_tasks"]
-            CreateBlock(quest_id, _block_num, _block_type, _min_tasks)
-            _data = GetBlockByInfo(quest_id, _block_num, _block_type)
+            CreateBlock(quest_id, _block_name, _block_num, _block_type, _min_tasks)
+            _data = GetBlockByInfo(quest_id, _block_name, _block_num, _block_type)
             _ret = {"block_id": _data['id']}
-            return {"status": "OK", "message": _ret}
+            return json.dumps({"status": "OK", "message": _ret})
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
 
@@ -241,33 +241,9 @@ def create_block(quest_id):
 def get_blocks(quest_id):
     if request.method == "POST":
         try:
-            # _header = request.headers
-            # _hauth_token = _header["auth_token"]
-            _hauth_token = request.json["auth_token"]
-            if TokenExpired(_hauth_token):
-                return {"status": "ERR", "message": "Registrate first"}
+            _json = request.data
+            _json = json.loads(_json)
 
-            _user = GetUserByToken(_hauth_token)
-            _quest = GetQuestById(quest_id)
-
-            if not _user or not _quest:
-                return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
-
-            _data = {"blocks_list": GetAllBlocks(quest_id)}
-            if len(_data) == 0:
-                return {"status": "ERR", "message": "There are no blocks yet"}
-            if _user['id'] == _quest["creator_id"]:
-                _data["is_creator"] = True
-            else:
-                _data["is_creator"] = False
-            return {"status": "OK", "message": json.dumps(_data)}
-        except Exception as e:
-            return {"status": "ERR", "message": f"{e}"}
-    else:
-        try:
-            # _header = request.headers
-            # _hauth_token = _header["auth_token"]
-            _json = request.json
             _hauth_token = _json["auth_token"]
             if TokenExpired(_hauth_token):
                 return {"status": "ERR", "message": "Registrate first"}
@@ -275,7 +251,34 @@ def get_blocks(quest_id):
             _user = GetUserByToken(_hauth_token)
             _quest = GetQuestById(quest_id)
 
-            if not _user or not _quest:
+            if len(_user) == 0 or len(_quest) == 0:
+                return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+            _blocks = GetAllBlocks(quest_id)
+            if len(_blocks) == 0:
+                return {"status": "ERR", "message": "There are no blocks yet"}
+
+            _data = {"blocks_list": _blocks}
+            if _user['id'] == _quest["creator_id"]:
+                _data["is_creator"] = True
+            else:
+                _data["is_creator"] = False
+            return json.dumps({"status": "OK", "message": _data})
+        except Exception as e:
+            return {"status": "ERR", "message": f"{e}"}
+    else:
+        try:
+            _json = request.data
+            _json = json.loads(_json)
+
+            _hauth_token = _json["auth_token"]
+            if TokenExpired(_hauth_token):
+                return {"status": "ERR", "message": "Registrate first"}
+
+            _user = GetUserByToken(_hauth_token)
+            _quest = GetQuestById(quest_id)
+
+            if len(_user) == 0 or len(_quest) == 0:
                 return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
             if _user['id'] != _quest["creator_id"]:

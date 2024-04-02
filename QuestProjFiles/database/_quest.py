@@ -87,9 +87,9 @@ def RemoveUserFromQuest(quest_id, user_id):
             delete(engine, "answer", user_id=user_id, task_id=_task["id"])
 
 
-def CreateBlock(quest_id, block_num, block_type, min_tasks):
-    columns = ["quest_id", "block_num", "block_type", "min_tasks"]
-    values = [quest_id, block_num, block_type, min_tasks]
+def CreateBlock(quest_id, block_name, block_num, block_type, min_tasks):
+    columns = ["quest_id", "block_name", "block_num", "block_type", "min_tasks"]
+    values = [quest_id, block_name, block_num, block_type, min_tasks]
     insert(engine, "blocks", columns, values)
 
 
@@ -97,8 +97,15 @@ def ChangeBlockInfo(block_id, name, change):
     update(engine, "blocks", {name: change}, {'id': block_id})
 
 
-def GetBlockByInfo(quest_id, block_num, block_type):
-    return select(engine, "blocks", quest_id=quest_id, block_num=block_num, block_type=block_type)[0]
+def GetBlockByInfo(quest_id, block_name, block_num, block_type):
+    _data = select(engine, "blocks",
+                   quest_id=quest_id,
+                   block_name=block_name,
+                   block_num=block_num,
+                   block_type=block_type)
+    if len(_data) > 0:
+        return _data[0]
+    return {}
 
 
 def GetAllBlocks(quest_id):

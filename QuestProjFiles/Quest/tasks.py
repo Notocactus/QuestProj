@@ -21,7 +21,7 @@ def task(task_id):
         _json = request.data
         _json = json.loads(_json)
 
-        _hauth_token = request.json["auth_token"]
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -73,7 +73,7 @@ def give_answer(task_id):
 
         AddAnswer(_quest['id'], task_id, _user['id'], _status, _points)
 
-        return {"status": "OK", "message": _task}
+        return {"status": "OK", "message": "Answer added successfully"}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 
@@ -91,7 +91,7 @@ def change_task(task_id):
         _json = request.data
         _json = json.loads(_json)
 
-        _hauth_token = request.json["auth_token"]
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -139,7 +139,7 @@ def delete_task(task_id):
         _json = request.data
         _json = json.loads(_json)
 
-        _hauth_token = request.json["auth_token"]
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -152,7 +152,6 @@ def delete_task(task_id):
         # if is not creator
         if _user['id'] != _quest["creator_id"]:
             return {"status": "ERR", "message": "Unauthorized attempt"}
-
 
         DeleteTask(task_id)
         return {"status": "OK", "message": "Task successfully deleted"}

@@ -5,7 +5,10 @@ from ._block import GetAllTasks
 
 
 def GetQuestById(quest_id):
-    return select(engine, "quests", id=quest_id)[0]
+    _data = select(engine, "quests", id=quest_id)
+    if len(_data) > 0:
+        return _data[0]
+    return {}
 
 
 def GetAllQuests():
@@ -14,7 +17,10 @@ def GetAllQuests():
 
 def GetAllCreatedQuests(token):
     user_id = GetUserByToken(token)["id"]
-    return select(engine, "quests", creator_id=user_id)
+    _data = select(engine, "quests", creator_id=user_id)
+    if len(_data) > 0:
+        return _data
+    return {}
 
 
 def GetAllParticipatedQuests(token):
@@ -35,7 +41,10 @@ def GetQuestParticipants(quest_id):
 
 
 def GetParticipation(quest_id, user_id):
-    return select(engine, "participation", quest_id=quest_id, user_id=user_id)[0]
+    _data = select(engine, "participation", quest_id=quest_id, user_id=user_id)
+    if len(_data) > 0:
+        return _data[0]
+    return {}
 
 
 def GetResults(quest_id):

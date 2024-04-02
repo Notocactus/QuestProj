@@ -3,9 +3,9 @@ from ._db_config import engine
 from time import *
 
 
-def RegisterUser(last_name, first_name, patronym):
-    columns = ['first_name', 'last_name', 'patronym']
-    values = [first_name, last_name, patronym]
+def RegisterUser(last_name, first_name, patronym, role):
+    columns = ['first_name', 'last_name', 'patronym', 'role']
+    values = [first_name, last_name, patronym, role]
     insert(engine, "users", columns, values)
     return select(engine, "users", last_name=last_name, first_name=first_name, patronym=patronym)[0]
 
@@ -31,16 +31,23 @@ def TokenExpired(hauth_token):
         return False
 
 
+def Logout(hauth_token):
+    delete(engine, "session", auth_token=hauth_token)
+
+
 def GetUserByToken(hauth_token):
     _user_id = select(engine, "session", auth_token=hauth_token)[0]["user_id"]
-    return select(engine, "users", id=_user_id)[0]
+    _data = select(engine, "users", id=_user_id)
+    if len(_data) > 0:
+        return _data[0]
+    return {}
 
 
 def GetUserByInfo(last_name, first_name, patronym):
     data = select(engine, "users", last_name=last_name, first_name=first_name, patronym=patronym)
     if len(data) > 0:
         return data[0]
-    return None
+    return {}
 
 
 def DeleteUser(user_id):

@@ -3,7 +3,10 @@ from ._db_config import engine
 
 
 def GetAllTasks(block_id):
-    return select(engine, "tasks", block_id=block_id)
+    _data = select(engine, "tasks", block_id=block_id)
+    if len(_data) > 0:
+        return _data
+    return []
 
 
 def CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _max_points, _min_points, _vital):
@@ -18,7 +21,10 @@ def CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _max_
 
 
 def GetBlockById(block_id):
-    return select(engine, "blocks", id=block_id)
+    _data = select(engine, "blocks", id=block_id)
+    if len(_data) > 0:
+        return _data[0]
+    return {}
 
 
 def ChangeBlockVits(block_id):

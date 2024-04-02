@@ -7,7 +7,10 @@ def GetTask(task_id):
 
 
 def GetUserProgress(user_id, task_id):
-    return select(engine, "answers", user_id=user_id, task_id=task_id)
+    _data = select(engine, "answers", user_id=user_id, task_id=task_id)
+    if len(_data) > 0:
+        return _data[0]
+    return {}
 
 
 def ChangeTaskInfo(task_id, name, change):

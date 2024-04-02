@@ -3,7 +3,7 @@
 from flask import json
 
 from .srv import app, request
-from ..database import GetUserProgress
+from ..database import GetUserProgress, ChangeTaskInfo
 
 from ..database._block import *
 from ..database._user import *
@@ -14,9 +14,10 @@ from ..database._quest import *
 def change_block(block_id):
     try:
         _block = GetBlockById(block_id)
-        # _header = request.headers
-        # _hauth_token = _header["auth_token"]
-        _json = request.json
+
+        _json = request.data
+        _json = json.loads(_json)
+
         _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
@@ -24,15 +25,13 @@ def change_block(block_id):
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(_block["quest_id"])
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         # if is not creator
         if _user['id'] != _quest["creator_id"]:
             return {"response": "ERR", "message": "Unauthorized attempt"}
 
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
@@ -41,55 +40,66 @@ def change_block(block_id):
         _block_type = _json["block_type"]
         _min_tasks = _json["min_tasks"]
         ChangeBlock(block_id, _block_name, _block_num, _block_type, _min_tasks)
+        return {"status": "OK", "message": "Block info successfully changed"}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/block/<string:block_id>', methods=["GET"])
+@app.route('/block/<string:block_id>', methods=["POST"])
 def block(block_id):
     try:
         _block = GetBlockById(block_id)
-        # _header = request.headers
-        # _hauth_token = _header["auth_token"]
-        _hauth_token = request.json["auth_token"]
+        if len(_block) == 0:
+            return {"status": "ERR", "message": "Block doesn't exist"}
+
+        _json = request.data
+        _json = json.loads(_json)
+
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(_block["quest_id"])
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         _tasks = GetAllTasks(block_id)
-        _tasks = sorted(_tasks, key=lambda d: d['task_num'])
+        if len(_tasks > 0):
+            _tasks = sorted(_tasks, key=lambda d: d['task_num'])
 
-        # if is not creator
+        # if not creator
         if _user['id'] != _quest["creator_id"]:
             for _task in _tasks:
                 _progress = GetUserProgress(_user["id"], _task["id"])
                 _task["user_progress"] = _progress
 
         _data = GetBlockById(block_id)
+        if len(_data) == 0:
+            return {"status": "ERR", "message": "There are no tasks yet"}
+
         _data["tasks_list"] = _tasks
 
-        if len(_data) == 0:
-            if _user['id'] == _quest["creator_id"]:
-                _data["is_creator"] = True
-            else:
-                _data["is_creator"] = False
-            return {"status": "ERR", "message": "There are no tasks yet"}
-        return {"status": "OK", "message": json.dumps(_data)}
+        if _user['id'] == _quest["creator_id"]:
+            _data["is_creator"] = True
+        else:
+            _data["is_creator"] = False
+        return json.dumps({"status": "OK", "message": _data}, ensure_ascii=False).encode("utf8")
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/block/<string:block_id>/tasks', methods=["POST"])
+@app.route('/block/<string:block_id>/task', methods=["POST"])
 def create_task(block_id):
     try:
         _block = GetBlockById(block_id)
-        # _header = request.headers
-        # _hauth_token = _header["auth_token"]
+        if len(_block) == 0:
+            return {"status": "ERR", "message": "Block doesn't exist"}
+
+        _json = request.data
+        _json = json.loads(_json)
+
         _json = request.json
         _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
@@ -98,14 +108,13 @@ def create_task(block_id):
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(_block["quest_id"])
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         # if is not creator
         if _user['id'] != _quest["creator_id"]:
             return {"response": "ERR", "message": "Unauthorized attempt"}
 
-        _block_id = _json["block_id"]
         _task_num = _json["task_num"]
         _task_type = _json["task_type"]
         _task_time = _json["task_time"]
@@ -114,41 +123,77 @@ def create_task(block_id):
         _min = _json["min_points"]
         _vital = _json["vital"]
 
-        _task = CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _max, _min, _vital)
+        _task = CreateTask(block_id, _task_num, _task_type, _task_time, _description, _max, _min, _vital)
         _ret = {"task_id": _task["id"]}
         if _vital == "true" or _vital is True:
-            ChangeBlockVits(_block_id)
+            ChangeBlockVits(block_id)
 
-        return {"status": "OK", "message": _ret}
+        return json.dumps({"status": "OK", "message": _ret})
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/block/<string:block_id>', methods=["DELETE"])
+@app.route('/block/<string:block_id>/tasks', methods=['PUT'])
+def tasks(block_id):
+    if request.method == "PUT":
+        try:
+            _block = GetBlockById(block_id)
+
+            if len(_block) == 0:
+                return {"status": "ERR", "message": "Block doesn't exist"}
+
+            _json = request.data
+            _json = json.loads(_json)
+
+            _hauth_token = _json["auth_token"]
+            if TokenExpired(_hauth_token):
+                return {"status": "ERR", "message": "Registrate first"}
+
+            _user = GetUserByToken(_hauth_token)
+            _quest = GetQuestById(_block["quest_id"])
+
+            if len(_user) == 0 or len(_quest) == 0:
+                return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
+
+            if _user['id'] != _quest["creator_id"]:
+                return {"status": "ERR", "message": "Unauthorized attempt"}
+
+            _tasks = _json['tasks_list']
+            for _task in _tasks:
+                ChangeTaskInfo(_task['id'], "task_num", _task['task_num'])
+            return {'status': "OK", "message": "Order changed"}
+        except Exception as e:
+            return {"status": "ERR", "message": f"{e}"}
+
+
+@app.route('/block/<string:block_id>/delete', methods=["DELETE"])
 def delete_block(block_id):
     try:
         _block = GetBlockById(block_id)
-        # _header = request.headers
-        # _hauth_token = _header["auth_token"]
-        _hauth_token = request.json["auth_token"]
+        if len(_block) == 0:
+            return {"status": "ERR", "message": "Block doesn't exist"}
+
+        _json = request.data
+        _json = json.loads(_json)
+
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(_block["quest_id"])
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         # if is not creator
         if _user['id'] != _quest["creator_id"]:
             return {"response": "ERR", "message": "Unauthorized attempt"}
 
-        if GetBlockById(block_id):
+        if len(GetBlockById(block_id)) > 0:
             DeleteBlock(block_id)
             return {"status": "OK", "message": "Block successfully deleted"}
         else:
             return {"status": "ERR", "message": "Block doesn't exist"}
-
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}

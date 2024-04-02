@@ -232,7 +232,7 @@ def create_block(quest_id):
             CreateBlock(quest_id, _block_name, _block_num, _block_type, _min_tasks)
             _data = GetBlockByInfo(quest_id, _block_name, _block_num, _block_type)
             _ret = {"block_id": _data['id']}
-            return json.dumps({"status": "OK", "message": _ret})
+            return json.dumps({"status": "OK", "message": _ret}, ensure_ascii=False).encode("utf8")
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
 
@@ -263,7 +263,7 @@ def get_blocks(quest_id):
                 _data["is_creator"] = True
             else:
                 _data["is_creator"] = False
-            return json.dumps({"status": "OK", "message": _data})
+            return json.dumps({"status": "OK", "message": _data}, ensure_ascii=False).encode("utf8")
         except Exception as e:
             return {"status": "ERR", "message": f"{e}"}
     else:

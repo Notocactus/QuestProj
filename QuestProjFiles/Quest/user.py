@@ -56,7 +56,7 @@ def validate():
         return json.dumps({"status": "ERR", "message": f"{e}"})
 
 
-@app.route("/user/user", methods=["GET"])
+@app.route("/user/user", methods=["POST"])
 def user():
     try:
         _json = request.data

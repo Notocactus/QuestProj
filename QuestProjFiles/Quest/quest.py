@@ -10,7 +10,7 @@ from ..database._tasks import GetUserProgress
 from .srv import app
 
 
-@app.route('/quests', methods=['GET'])
+@app.route('/quests', methods=['POST'])
 def get_quests():
     try:
         _json = request.data
@@ -37,7 +37,7 @@ def get_quests():
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<string:quest_id>/participants', methods=["GET"])
+@app.route('/quests/<string:quest_id>/participants', methods=["POST"])
 def get_quest_participants(quest_id):
     try:
         _json = request.data
@@ -93,9 +93,9 @@ def create_quest():
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<string:quest_id>', methods=["GET", "PUT"])
+@app.route('/quests/<string:quest_id>', methods=["POST", "PUT"])
 def quest(quest_id):
-    if request.method == "GET":
+    if request.method == "POST":
         try:
             _json = request.data
             _json = json.loads(_json)
@@ -237,9 +237,9 @@ def create_block(quest_id):
             return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route('/quests/<string:quest_id>/blocks', methods=['GET', "PUT"])
+@app.route('/quests/<string:quest_id>/blocks', methods=['POST', "PUT"])
 def get_blocks(quest_id):
-    if request.method == "GET":
+    if request.method == "POST":
         try:
             # _header = request.headers
             # _hauth_token = _header["auth_token"]
@@ -353,7 +353,7 @@ def delete_quest(quest_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route("/quests/<string:quest_id>/results", methods=["GET"])
+@app.route("/quests/<string:quest_id>/results", methods=["POST"])
 def results(quest_id):
     try:
         _json = request.json
@@ -373,7 +373,7 @@ def results(quest_id):
         return {"status": "ERR", "message": f"{e}"}
 
 
-@app.route("/quest/<string:quest_id>/points", methods=["GET"])
+@app.route("/quest/<string:quest_id>/points", methods=["POST"])
 def points(quest_id):
     try:
         _json = request.json

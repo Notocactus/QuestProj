@@ -36,10 +36,12 @@ def GetAllParticipatedQuests(token):
 
 def GetQuestParticipants(quest_id):
     participants = select(engine, "participation", quest_id=quest_id)
-    users = []
-    for participant in participants:
-        select(engine, "users", id=participant["user_id"])
-    return users
+    if len(participants) > 0:
+        users = []
+        for participant in participants:
+            select(engine, "users", id=participant["user_id"])
+        return users
+    return []
 
 
 def GetParticipation(quest_id, user_id):

@@ -9,14 +9,19 @@ def GetAllTasks(block_id):
     return []
 
 
-def CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _max_points, _min_points, _vital):
-    columns = ["block_id", "task_num", "task_type", "task_time", "description", "max_points", "min_points", "vital"]
-    values = [_block_id, _task_num, _task_type, _task_time, _description, _max_points, _min_points, _vital]
+def CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _question,
+               _max_points, _min_points, _answer, _vital):
+    columns = ["block_id", "task_num", "task_type", "task_time", "description", "question",
+               "max_points", "min_points", "answer", "vital"]
+    values = [_block_id, _task_num, _task_type, _task_time, _description, _question,
+              _max_points, _min_points, _answer, _vital]
     insert(engine, "tasks", columns, values)
     return select(engine, 'tasks', block_id=_block_id,
                   task_num=_task_num,
-                  _task_type=_task_type,
+                  task_type=_task_type,
                   description=_description,
+                  question=_question,
+                  answer=_answer,
                   vital=_vital)[0]
 
 

@@ -30,8 +30,8 @@ def get_quests():
 
         _data = {"created_quests": _created_quests, "participated_quests": _participated_quests}
 
-        if len(_created_quests) == 0 and len(_participated_quests) == 0:
-            return {"status": "ERR", "message": "There are no quests yet"}
+        # if len(_created_quests) == 0 and len(_participated_quests) == 0:
+        #     return {"status": "ERR", "message": "There are no quests yet"}
         return json.dumps({"status": "OK", "message": _data}, ensure_ascii=False).encode("utf8")
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
@@ -50,20 +50,19 @@ def get_quest_participants(quest_id):
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(quest_id)
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
-        if quest_id:
-            _data = {"participants": GetQuestParticipants(quest_id)}
-            if len(_data) == 0:
-                return {"status": "ERR", "message": "There are no participants yet"}
-            if _user['id'] == _quest["creator_id"]:
-                _data["is_creator"] = True
-            else:
-                _data["is_creator"] = False
-            return json.dumps({"status": "OK", "message": _data}, ensure_ascii=False).encode("utf8")
+        _participants = GetQuestParticipants(quest_id)
+
+        _data = {"participants": _participants}
+        # if len(_participants) == 0:
+        #     return {"status": "ERR", "message": "There are no participants yet"}
+        if _user['id'] == _quest["creator_id"]:
+            _data["is_creator"] = True
         else:
-            return {"status": "ERR", "message": "Something went terribly wrong"}
+            _data["is_creator"] = False
+        return json.dumps({"status": "OK", "message": _data}, ensure_ascii=False).encode("utf8")
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 
@@ -184,16 +183,17 @@ def quest(quest_id):
 @app.route('/quests/<string:quest_id>/removeparticipant/<string:user_id>', methods=["DELETE"])
 def remove_participant(quest_id, user_id):
     try:
-        # _header = request.headers
-        # _hauth_token = _header["auth_token"]
-        _hauth_token = request.json["auth_token"]
+        _json = request.data
+        _json = json.loads(_json)
+
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(quest_id)
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         if _user['id'] != _quest["creator_id"]:
@@ -295,16 +295,17 @@ def get_blocks(quest_id):
 @app.route('/quests/<string:quest_id>/joinquest', methods=["POST"])
 def participate(quest_id):
     try:
-        # _header = request.headers
-        # _hauth_token = _header["auth_token"]
-        _hauth_token = request.json["auth_token"]
+        _json = request.data
+        _json = json.loads(_json)
+
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(quest_id)
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         AddParticipant(_quest["id"], _user["id"])
@@ -316,15 +317,17 @@ def participate(quest_id):
 @app.route('/quests/<string:quest_id>/quitquest', methods=["DELETE"])
 def quit(quest_id):
     try:
-        _header = request.headers
-        _hauth_token = _header["auth_token"]
+        _json = request.data
+        _json = json.loads(_json)
+
+        _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
 
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(quest_id)
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         RemoveUserFromQuest(_quest["id"], _user["id"])
@@ -336,7 +339,9 @@ def quit(quest_id):
 @app.route("/quests/<string:quest_id>/delete", methods=["DELETE"])
 def delete_quest(quest_id):
     try:
-        _json = request.json
+        _json = request.data
+        _json = json.loads(_json)
+
         _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
@@ -359,7 +364,9 @@ def delete_quest(quest_id):
 @app.route("/quests/<string:quest_id>/results", methods=["POST"])
 def results(quest_id):
     try:
-        _json = request.json
+        _json = request.data
+        _json = json.loads(_json)
+
         _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
@@ -367,7 +374,7 @@ def results(quest_id):
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(quest_id)
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         _data = {"results": GetResults(quest_id)}
@@ -379,7 +386,9 @@ def results(quest_id):
 @app.route("/quest/<string:quest_id>/points", methods=["POST"])
 def points(quest_id):
     try:
-        _json = request.json
+        _json = request.data
+        _json = json.loads(_json)
+
         _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
@@ -387,13 +396,13 @@ def points(quest_id):
         _user = GetUserByToken(_hauth_token)
         _quest = GetQuestById(quest_id)
 
-        if not _user or not _quest:
+        if len(_user) == 0 or len(_quest) == 0:
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         if _user['id'] == _quest["creator_id"]:
             return {"status": "ERR", "message": "Creator can't participate"}
 
         _data = {"points": GetParticipation(quest_id, _user["id"])["user_score"]}
-        return {"status": "OK", "message": json.dumps(_data)}
+        return json.dumps({"status": "OK", "message": _data}, ensure_ascii=False).encode("utf8")
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}

@@ -96,7 +96,6 @@ def create_task(block_id):
         _json = request.data
         _json = json.loads(_json)
 
-        _json = request.json
         _hauth_token = _json["auth_token"]
         if TokenExpired(_hauth_token):
             return {"status": "ERR", "message": "Registrate first"}
@@ -115,13 +114,16 @@ def create_task(block_id):
         _task_type = _json["task_type"]
         _task_time = _json["task_time"]
         _description = _json["description"]
+        _question = _json["question"]
         _max = _json["max_points"]
         _min = _json["min_points"]
+        _answer = _json["answer"]
         _vital = _json["vital"]
 
-        _task = CreateTask(block_id, _task_num, _task_type, _task_time, _description, _max, _min, _vital)
+        _task = CreateTask(block_id, _task_num, _task_type, _task_time,
+                           _description, _question, _max, _min, _answer, _vital)
         _ret = {"task_id": _task["id"]}
-        if _vital == "true" or _vital is True:
+        if _vital == "1" or int(_vital) == 1:
             ChangeBlockVits(block_id)
 
         return json.dumps({"status": "OK", "message": _ret})

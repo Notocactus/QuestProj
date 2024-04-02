@@ -107,18 +107,24 @@ def change_task(task_id):
 
         _task_time = _json["task_time"]
         _description = _json["description"]
+        _question = _json["question"]
         _max = _json["max_points"]
         _min = _json["min_points"]
+        _answer = _json['answer']
         _vital = _json["vital"]
 
         if _task_time:
             ChangeTaskInfo(task_id, "task_time", _task_time)
         if _description:
             ChangeTaskInfo(task_id, "description", _description)
+        if _question:
+            ChangeTaskInfo(task_id, "question", _question)
         if _max:
             ChangeTaskInfo(task_id, "max_points", _max)
         if _min:
             ChangeTaskInfo(task_id, "min_points", _min)
+        if _answer:
+            ChangeTaskInfo(task_id, "answer", _answer)
         if _vital:
             ChangeTaskInfo(task_id, "vital", _vital)
         return {"status": "OK", "message": "Task successfully changed"}

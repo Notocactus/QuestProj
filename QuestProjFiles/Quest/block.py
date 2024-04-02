@@ -66,7 +66,7 @@ def block(block_id):
             return {"status": "ERR", "message": "User doesn't exist or quest doesn't exist"}
 
         _tasks = GetAllTasks(block_id)
-        if len(_tasks > 0):
+        if len(_tasks) > 0:
             _tasks = sorted(_tasks, key=lambda d: d['task_num'])
 
         # if not creator
@@ -75,17 +75,13 @@ def block(block_id):
                 _progress = GetUserProgress(_user["id"], _task["id"])
                 _task["user_progress"] = _progress
 
-        _data = GetBlockById(block_id)
-        if len(_data) == 0:
-            return {"status": "ERR", "message": "There are no tasks yet"}
-
-        _data["tasks_list"] = _tasks
+        _block["tasks_list"] = _tasks
 
         if _user['id'] == _quest["creator_id"]:
-            _data["is_creator"] = True
+            _block["is_creator"] = True
         else:
-            _data["is_creator"] = False
-        return json.dumps({"status": "OK", "message": _data}, ensure_ascii=False).encode("utf8")
+            _block["is_creator"] = False
+        return json.dumps({"status": "OK", "message": _block}, ensure_ascii=False).encode("utf8")
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}
 

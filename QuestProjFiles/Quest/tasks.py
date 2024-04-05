@@ -5,6 +5,7 @@ from flask import json
 from .srv import request
 
 from ..database._tasks import *
+from ..database._quest import *
 from ..database import GetBlockById, GetQuestById, TokenExpired, GetUserByToken
 from .srv import app
 
@@ -71,7 +72,15 @@ def give_answer(task_id):
         _status = _json['status']
         _points = _json["points"]
 
-        AddAnswer(_quest['id'], task_id, _user['id'], _status, _points)
+        if _quest["quest_type"] == 1:
+            _group = GetGroupParticipationByInfo(_quest["id"], _user['id'])
+            _members = GetGroupParticipants(_group["id"])
+            _points = GetUserProgress(_user['id'], _task["id"])
+            if _points["points"] < _points:
+                for _member in _members:
+                    AddAnswer(_quest['id'], task_id, _member['id'], _status, _points)
+        else:
+            AddAnswer(_quest['id'], task_id, _user['id'], _status, _points)
 
         return {"status": "OK", "message": "Answer added successfully"}
     except Exception as e:
@@ -113,20 +122,13 @@ def change_task(task_id):
         _answer = _json['answer']
         _vital = _json["vital"]
 
-        if _task_time:
-            ChangeTaskInfo(task_id, "task_time", _task_time)
-        if _description:
-            ChangeTaskInfo(task_id, "description", _description)
-        if _question:
-            ChangeTaskInfo(task_id, "question", _question)
-        if _max:
-            ChangeTaskInfo(task_id, "max_points", _max)
-        if _min:
-            ChangeTaskInfo(task_id, "min_points", _min)
-        if _answer:
-            ChangeTaskInfo(task_id, "answer", _answer)
-        if _vital:
-            ChangeTaskInfo(task_id, "vital", _vital)
+        ChangeTaskInfo(task_id, "task_time", _task_time)
+        ChangeTaskInfo(task_id, "description", _description)
+        ChangeTaskInfo(task_id, "question", _question)
+        ChangeTaskInfo(task_id, "max_points", _max)
+        ChangeTaskInfo(task_id, "min_points", _min)
+        ChangeTaskInfo(task_id, "answer", _answer)
+        ChangeTaskInfo(task_id, "vital", _vital)
         return {"status": "OK", "message": "Task successfully changed"}
     except Exception as e:
         return {"status": "ERR", "message": f"{e}"}

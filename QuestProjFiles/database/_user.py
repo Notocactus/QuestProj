@@ -21,9 +21,10 @@ def GetAuthToken(session_hash):
 
 
 def TokenExpired(hauth_token):
-    _session = select(engine, "session", auth_token=hauth_token)[0]
-    if not _session:
+    _session = select(engine, "session", auth_token=hauth_token)
+    if len(_session) == 0:
         return True
+    _session = _session[0]
     if _session["expiry_time"] < str(time()):
         delete(engine, "session", auth_token=hauth_token)
         return True

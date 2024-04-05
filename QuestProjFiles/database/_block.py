@@ -10,11 +10,11 @@ def GetAllTasks(block_id):
 
 
 def CreateTask(_block_id, _task_num, _task_type, _task_time, _description, _question,
-               _max_points, _min_points, _answer, _vital):
+               _max_points, _min_points, _answer, _vital, _images):
     columns = ["block_id", "task_num", "task_type", "task_time", "description", "question",
-               "max_points", "min_points", "answer", "vital"]
+               "max_points", "min_points", "answer", "vital", "images"]
     values = [_block_id, _task_num, _task_type, _task_time, _description, _question,
-              _max_points, _min_points, _answer, _vital]
+              _max_points, _min_points, _answer, _vital, _images]
     insert(engine, "tasks", columns, values)
 
 
@@ -56,10 +56,10 @@ def DeleteBlock(block_id):
         delete(engine, "answers", task_id=task['id'])
 
 
-# def DuplicateTask(_new_block_id, _block_id, _task_num, _task_type, _task_time,
-#                   _description, _question, _max_points, _min_points, _answer, _vital):
-#     num_tasks = len(GetTaskByInfo(_block_id, _task_num, _task_type, _task_time,
-#                   _description, _question, _max_points, _min_points, _answer, _vital))
-#
-#     CreateTask(_new_block_id, _task_num, _task_type, _task_time, _description, _question,
-#                _max_points, _min_points, _answer, _vital)
+def DuplicateTask(_new_block_id, _block_id, _task_id, _task_num, _task_type, _task_time,
+                  _description, _question, _max_points, _min_points, _answer, _vital):
+    # num_tasks = len(GetTaskByInfo(_block_id, _task_num, _task_type, _task_time,
+    #                 _description, _question, _max_points, _min_points, _answer, _vital))
+    num_tasks = len(GetAllTasks(_new_block_id))
+    CreateTask(_new_block_id, num_tasks, _task_type, _task_time, _description, _question,
+               _max_points, _min_points, _answer, _vital)
